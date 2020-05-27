@@ -1,0 +1,93 @@
+{
+  "format": 1,
+  "restore": {
+    "S:\\Code\\VisualStudioWorkSpace\\FullPlatformPublisher\\FullPlatformPublisher\\FullPlatformPublisher.csproj": {}
+  },
+  "projects": {
+    "S:\\Code\\VisualStudioWorkSpace\\FullPlatformPublisher\\FullPlatformPublisher\\FullPlatformPublisher.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "S:\\Code\\VisualStudioWorkSpace\\FullPlatformPublisher\\FullPlatformPublisher\\FullPlatformPublisher.csproj",
+        "projectName": "FullPlatformPublisher",
+        "projectPath": "S:\\Code\\VisualStudioWorkSpace\\FullPlatformPublisher\\FullPlatformPublisher\\FullPlatformPublisher.csproj",
+        "packagesPath": "C:\\Users\\jinshuguangze\\.nuget\\packages\\",
+        "outputPath": "S:\\Code\\VisualStudioWorkSpace\\FullPlatformPublisher\\FullPlatformPublisher\\obj\\",
+        "projectStyle": "PackageReference",
+        "skipContentFileWrite": true,
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft SDKs\\UWPNuGetPackages\\"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\jinshuguangze\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "uap10.0.18362"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "uap10.0.18362": {
+            "projectReferences": {}
+          }
+        }
+      },
+      "frameworks": {
+        "uap10.0.18362": {
+          "dependencies": {
+            "Aliyun.OSS.SDK": {
+              "target": "Package",
+              "version": "[2.10.0, )"
+            },
+            "HtmlAgilityPack": {
+              "target": "Package",
+              "version": "[1.11.23, )"
+            },
+            "Microsoft.NETCore.UniversalWindowsPlatform": {
+              "target": "Package",
+              "version": "[6.2.10, )"
+            },
+            "Microsoft.UI.Xaml": {
+              "target": "Package",
+              "version": "[2.4.2, )"
+            },
+            "Win2D.uwp": {
+              "target": "Package",
+              "version": "[1.25.0, )"
+            }
+          },
+          "imports": [
+            "net461"
+          ],
+          "assetTargetFallback": true,
+          "warn": true
+        }
+      },
+      "runtimes": {
+        "win10-arm": {
+          "#import": []
+        },
+        "win10-arm-aot": {
+          "#import": []
+        },
+        "win10-arm64-aot": {
+          "#import": []
+        },
+        "win10-x64": {
+          "#import": []
+        },
+        "win10-x64-aot": {
+          "#import": []
+        },
+        "win10-x86": {
+          "#import": []
+        },
+        "win10-x86-aot": {
+          "#import": []
+        }
+      }
+    }
+  }
+}
