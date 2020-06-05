@@ -1,15 +1,16 @@
 ﻿using HtmlAgilityPack;
 using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Text;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Numerics;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Networking.BackgroundTransfer;
 using Windows.Storage;
@@ -125,21 +126,21 @@ namespace FullPlatformPublisher
         // 点击同步按钮
         private async void button_synchronize_ClickAsync(object sender, RoutedEventArgs e)
         {
-            //if (TheOpenedFile.Html == null)
-            //{
-            //    return;
-            //}
+            if (checkBox_toutiao.IsChecked == true)
+            {
+                if (TheOpenedFile.Html == null)
+                {
+                    return;
+                }
 
-            //if (checkBox_toutiao.IsChecked == true)
-            //{
-            //    // 处理头条html
-            //    TheOpenedFile.ToutiaoHtml = toutiaoHtmlProcessing(TheOpenedFile.Html);
+                // 处理头条html
+                TheOpenedFile.ToutiaoHtml = toutiaoHtmlProcessing(TheOpenedFile.Html);
 
-            //    // 设置粘贴板内容
-            //    DataPackage ToutiaoHtmlDataPackage = new DataPackage();
-            //    ToutiaoHtmlDataPackage.SetText(TheOpenedFile.ToutiaoHtml);
-            //    Clipboard.SetContent(ToutiaoHtmlDataPackage);
-            //}
+                // 设置粘贴板内容
+                DataPackage ToutiaoHtmlDataPackage = new DataPackage();
+                ToutiaoHtmlDataPackage.SetText(TheOpenedFile.ToutiaoHtml);
+                Clipboard.SetContent(ToutiaoHtmlDataPackage);
+            }
 
             // ---------暂时没想好怎么处理---------
             if (TheOpenedFile.File.FileType.Equals(".md"))
@@ -174,7 +175,7 @@ namespace FullPlatformPublisher
 
                 // 读取logo图像素材
                 CanvasDevice canvasDevice = new CanvasDevice(true);
-                StorageFile logoFile = await getFileFromUri(currentFolder, "1.png");
+                StorageFile logoFile = await getFileFromUri(currentFolder, "logo0.png");
                 CanvasBitmap logoImage = await CanvasBitmap.LoadAsync(canvasDevice, await logoFile.OpenAsync(FileAccessMode.Read));
 
                 // 本地图像处理
@@ -190,18 +191,21 @@ namespace FullPlatformPublisher
                     }
                     CanvasBitmap basicImage = await CanvasBitmap.LoadAsync(canvasDevice, await imageFile.OpenAsync(FileAccessMode.Read));
 
-                    // 进行拼合
-                    Windows.Foundation.Size newSize = basicImage.Size;
-                    newSize.Height += logoImage.Size.Height;
-                    using (CanvasRenderTarget canvasRenderTarget = new CanvasRenderTarget(basicImage, newSize))
+                    // 进行拼合，极限情况：横条：长度大于三倍高度；竖条：高度大于两倍长度。此时都基于长度放缩。
+                    double basicWidth = basicImage.Size.Width;
+                    double basicHeight = basicImage.Size.Height;
+                    using (CanvasRenderTarget canvasRenderTarget = new CanvasRenderTarget(basicImage
+                        , new Windows.Foundation.Size(basicWidth + 0.02 * basicHeight, 1.28 * basicHeight)))
                     {
                         using (CanvasDrawingSession session = canvasRenderTarget.CreateDrawingSession())
                         {
                             session.Clear(Colors.White);
-                            session.DrawImage(basicImage);
-                            session.DrawImage(logoImage, 0, (float)basicImage.Size.Height);
+                            session.DrawImage(basicImage, (float)(0.01 * basicHeight), (float)(0.01 * basicHeight));
+                            session.DrawImage(logoImage, new Rect(0.01 * basicHeight, 1.02 * basicHeight, 0.25 * basicHeight, 0.25 * basicHeight)
+                                , new Rect(0.0, 0.0, logoImage.Size.Width, logoImage.Size.Height), (float)1.0, CanvasImageInterpolation.HighQualityCubic);
                             session.DrawText("这张图片的介绍巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉"
-                                , new Vector2((float)(logoImage.Size.Width), (float)basicImage.Size.Height), Colors.Black);
+                                , (float)(0.27 * basicHeight), (float)(1.02 * basicHeight), (float)(1.02 * basicWidth - 0.28 * basicHeight)
+                                , (float)(0.25 * basicHeight), Colors.Black, new CanvasTextFormat());
                             session.Flush();
                         }
                         StorageFile storageFile = await (await currentFolder.CreateFolderAsync("fortest", CreationCollisionOption.OpenIfExists))
