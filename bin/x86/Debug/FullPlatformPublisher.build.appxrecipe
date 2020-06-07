@@ -127,6 +127,9 @@
       <PackagePath>Assets\Wide310x150Logo.scale-200.png</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
     </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\fonts\qingsong.ttf">
+      <PackagePath>Assets\fonts\qingsong.ttf</PackagePath>
+    </AppxPackagedFile>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\FullPlatformPublisher.xr.xml">
       <PackagePath>FullPlatformPublisher.xr.xml</PackagePath>
     </AppxPackagedFile>

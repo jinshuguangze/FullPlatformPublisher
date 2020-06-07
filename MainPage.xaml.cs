@@ -191,30 +191,81 @@ namespace FullPlatformPublisher
                     }
                     CanvasBitmap basicImage = await CanvasBitmap.LoadAsync(canvasDevice, await imageFile.OpenAsync(FileAccessMode.Read));
 
-                    // 进行拼合，极限情况：横条：长度大于三倍高度；竖条：高度大于两倍长度。此时都基于长度放缩。
+                    // 自动生成图片基础参数
                     double basicWidth = basicImage.Size.Width;
                     double basicHeight = basicImage.Size.Height;
+                    double logoLength;
+                    double imageBound;
+                    // 长度大于四倍高度判定为横条，此时logo长度以基础长度为比例，间隙大小以基础高度为比例
+                    if (basicWidth > (4 * basicHeight))
+                    {
+                        logoLength = 0.25 * basicWidth;
+                        imageBound = 0.01 * basicHeight;
+                    }
+                    // 长度小于一半高度判定为竖条，此时logo长度以基础长度为比例，间隙大小以基础长度为比例
+                    else if (basicWidth < (0.5 * basicHeight))
+                    {
+                        logoLength = 0.5 * basicWidth;
+                        imageBound = 0.01 * basicWidth;
+                    }
+                    // 正常图片的参数以基础图片的高度为比例
+                    else
+                    {
+                        logoLength = 0.25 * basicHeight;
+                        imageBound = 0.01 * basicHeight;
+                    }
+                    double textLength = basicWidth - logoLength - imageBound;
+
+                    // 自动生成字体格式
+                    string note = mdImageNoteArray[i] as string;
+                    if (note.Equals(""))
+                    {
+                        // 如果没有注释，则使用默认注释格式
+                        note = "如果您觉得文章不错，就点个赞吧！";
+                    }
+                    // 默认字体大小为短边的一半，如果超过上限，则每次字号减小1%再检验
+                    float fontSize = (float)((logoLength < textLength) ? (logoLength) : (textLength));
+                    while (Math.Floor(logoLength / fontSize) * Math.Floor(textLength / fontSize) < note.Length)
+                    {
+                        fontSize *= 0.99f;
+                    }
+                    // 最终字号变为磅数，加入自定义字体和换行规则
+                    // TODO：文字变得居中且更严格的自适应大小改变
+                    CanvasTextFormat textFormat = new CanvasTextFormat()
+                    {
+                        FontFamily = "ms-appx:///Assets/fonts/qingsong.ttf#清松手寫體1",
+                        WordWrapping = CanvasWordWrapping.WholeWord,
+                        FontSize = fontSize * (72.0f / basicImage.Dpi)
+                    };
+
+                    // 进行拼合
                     using (CanvasRenderTarget canvasRenderTarget = new CanvasRenderTarget(basicImage
-                        , new Windows.Foundation.Size(basicWidth + 0.02 * basicHeight, 1.28 * basicHeight)))
+                        , new Size(basicWidth + 2 * imageBound, basicHeight + logoLength + 3 * imageBound)))
                     {
                         using (CanvasDrawingSession session = canvasRenderTarget.CreateDrawingSession())
                         {
+                            // 加入白底
                             session.Clear(Colors.White);
-                            session.DrawImage(basicImage, (float)(0.01 * basicHeight), (float)(0.01 * basicHeight));
-                            session.DrawImage(logoImage, new Rect(0.01 * basicHeight, 1.02 * basicHeight, 0.25 * basicHeight, 0.25 * basicHeight)
+                            // 渲染基础图像
+                            session.DrawImage(basicImage, (float)imageBound, (float)imageBound);
+                            // 渲染logo图像
+                            session.DrawImage(logoImage, new Rect(imageBound, basicHeight + 2 * imageBound, logoLength, logoLength)
                                 , new Rect(0.0, 0.0, logoImage.Size.Width, logoImage.Size.Height), (float)1.0, CanvasImageInterpolation.HighQualityCubic);
-                            session.DrawText("这张图片的介绍巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉巴拉"
-                                , (float)(0.27 * basicHeight), (float)(1.02 * basicHeight), (float)(1.02 * basicWidth - 0.28 * basicHeight)
-                                , (float)(0.25 * basicHeight), Colors.Black, new CanvasTextFormat());
+                            // 渲染文本栏目
+                            session.DrawText(note, (float)(logoLength + 2 * imageBound), (float)(basicHeight + 2 * imageBound)
+                                , (float)textLength, (float)logoLength, Colors.Black, textFormat);
+                            // 刷新
                             session.Flush();
                         }
+                        // 生成处理后的图像文件
                         StorageFile storageFile = await (await currentFolder.CreateFolderAsync("fortest", CreationCollisionOption.OpenIfExists))
                         .CreateFileAsync("test.gif", CreationCollisionOption.GenerateUniqueName);
                         await canvasRenderTarget.SaveAsync(await storageFile.OpenAsync(FileAccessMode.ReadWrite), CanvasBitmapFileFormat.Gif);
                     }
 
+                    i++;
                     //// 上传图片至阿里云
-                    //i++;
+                    //
                     //OssClient client = new OssClient(EndPoint, AccessKeyID, AccessKeySecret);
                     //string absoluteImagePath = currentFolder.Path + "/" + mdImagePath;
                     //string uploadPath = "/autoUpload/" + System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
@@ -636,8 +687,6 @@ namespace FullPlatformPublisher
                     break;
                 }
             } while (true);
-
-
 
             // 代码块处理：将单行代码块变成高亮
             // TODO：多行代码行到编辑器里会多一行
