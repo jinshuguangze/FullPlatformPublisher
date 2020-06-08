@@ -37,13 +37,9 @@
       "frameworks": {
         "uap10.0.18362": {
           "dependencies": {
-            "Aliyun.OSS.SDK": {
-              "target": "Package",
-              "version": "[2.10.0, )"
-            },
             "HtmlAgilityPack": {
               "target": "Package",
-              "version": "[1.11.23, )"
+              "version": "[1.11.24, )"
             },
             "Microsoft.NETCore.UniversalWindowsPlatform": {
               "target": "Package",

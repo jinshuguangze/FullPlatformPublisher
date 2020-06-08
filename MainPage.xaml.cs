@@ -10,6 +10,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Data.Json;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Networking.BackgroundTransfer;
@@ -21,6 +22,7 @@ using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
+using Windows.Web.Http;
 
 namespace FullPlatformPublisher
 {
@@ -29,17 +31,14 @@ namespace FullPlatformPublisher
         // 当前打开的md文件
         private static OpenedFile TheOpenedFile = new OpenedFile();
 
-        // 上传阿里云的EndPoint
-        private static string EndPoint = "oss-accelerate.aliyuncs.com";
+        // 上传图床网址
+        public static string PostUrl = "https://nii.ink/api/upload";
 
-        //  上传阿里云的AccessKeyID
-        private static string AccessKeyID = "LTAI4GH9HkPLzXemuDHJBXwn";
+        // 上传图床类型
+        public static string PostType = "toutiao";
 
-        //  上传阿里云的AccessKeySecret
-        private static string AccessKeySecret = "zjIQE82LiPGVVMYiHCkVaWgZVCVhTF";
-
-        // 上传阿里云的Bucket
-        private static string Bucket = "evaluations";
+        // 上传图床token
+        public static string PostToken = "15f25c5ce5d90061aafc0fdc74c36ae2";
 
         // 存储数据的根文件夹名称
         public static string Root = "Papers";
@@ -175,7 +174,12 @@ namespace FullPlatformPublisher
 
                 // 读取logo图像素材
                 CanvasDevice canvasDevice = new CanvasDevice(true);
-                StorageFile logoFile = await getFileFromUri(currentFolder, "logo0.png");
+                StorageFile logoFile = await getFileFromUri(Root + "/logo0.png");
+                if (logoFile == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("logo0.png文件已损坏！请检查根目录！");
+                    return;
+                }
                 CanvasBitmap logoImage = await CanvasBitmap.LoadAsync(canvasDevice, await logoFile.OpenAsync(FileAccessMode.Read));
 
                 // 本地图像处理
@@ -186,7 +190,7 @@ namespace FullPlatformPublisher
                     StorageFile imageFile = await getFileFromUri(currentFolder, mdImagePath);
                     if (imageFile == null)
                     {
-                        // 这里跳过去之前需要处理下
+                        System.Diagnostics.Debug.WriteLine("本地文件" + mdImagePath + "丢失！已经自动跳过，请稍后手动上传。");
                         continue;
                     }
                     CanvasBitmap basicImage = await CanvasBitmap.LoadAsync(canvasDevice, await imageFile.OpenAsync(FileAccessMode.Read));
@@ -217,7 +221,7 @@ namespace FullPlatformPublisher
                     double textLength = basicWidth - logoLength - imageBound;
 
                     // 自动生成字体格式
-                    string note = mdImageNoteArray[i] as string;
+                    string note = mdImageNoteArray[i++] as string;
                     if (note.Equals(""))
                     {
                         // 如果没有注释，则使用默认注释格式
@@ -258,35 +262,30 @@ namespace FullPlatformPublisher
                             session.Flush();
                         }
                         // 生成处理后的图像文件
-                        StorageFile storageFile = await (await currentFolder.CreateFolderAsync("fortest", CreationCollisionOption.OpenIfExists))
-                        .CreateFileAsync("test.gif", CreationCollisionOption.GenerateUniqueName);
+                        StorageFile storageFile = await (await currentFolder.CreateFolderAsync(ProcessedImages, CreationCollisionOption.OpenIfExists))
+                        .CreateFileAsync(imageFile.Name, CreationCollisionOption.ReplaceExisting);
                         await canvasRenderTarget.SaveAsync(await storageFile.OpenAsync(FileAccessMode.ReadWrite), CanvasBitmapFileFormat.Gif);
+
+                        // 上传图像文件至图床
+                        try
+                        {
+                            HttpMultipartFormDataContent dataContent = new HttpMultipartFormDataContent();
+                            HttpStreamContent streamContent = new HttpStreamContent(await storageFile.OpenAsync(FileAccessMode.Read));
+                            // 生成表单
+                            dataContent.Add(streamContent, "image", System.DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + ".gif");
+                            dataContent.Add(new HttpStringContent(PostType), "apiType");
+                            dataContent.Add(new HttpStringContent(PostToken), "token");
+                            HttpClient httpClient = new HttpClient();
+                            // 上传并得到回应
+                            HttpResponseMessage response = await httpClient.PostAsync(new Uri(PostUrl), dataContent).AsTask();
+
+                            JsonObject jsonObject = JsonObject.Parse(await response.Content.ReadAsStringAsync());
+                        }
+                        catch
+                        {
+                            throw;
+                        }
                     }
-
-                    i++;
-                    //// 上传图片至阿里云
-                    //
-                    //OssClient client = new OssClient(EndPoint, AccessKeyID, AccessKeySecret);
-                    //string absoluteImagePath = currentFolder.Path + "/" + mdImagePath;
-                    //string uploadPath = "/autoUpload/" + System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
-                    //    + "/" + i + absoluteImagePath.Substring(absoluteImagePath.LastIndexOf('.'));
-                    //try
-                    //{
-                    //    client.PutObject(Bucket, uploadPath, absoluteImagePath);
-                    //    System.Diagnostics.Debug.WriteLine("位于" + absoluteImagePath + "的图片上传成功！");
-                    //}
-                    //catch
-                    //{
-                    //    System.Diagnostics.Debug.WriteLine("位于" + absoluteImagePath + "的图片上传失败！");
-                    //}
-
-                    //// 下载到本地
-                    //await downloadImageUri(new Uri("https://" + Bucket + "." + EndPoint + uploadPath)
-                    //    , await currentFolder.CreateFolderAsync(ProcessedImages, CreationCollisionOption.OpenIfExists));
-                    //// 替换掉md文件中所有的图片链接
-
-                    //// 替换掉html文件中所有的图片链接
-
                 }
             }
         }

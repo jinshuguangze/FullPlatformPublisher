@@ -13,7 +13,6 @@ S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x8
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\HtmlAgilityPack.dll
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\HtmlAgilityPack.pdb
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\System.Runtime.dll
-S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\System.Xml.XPath.XmlDocument.dll
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\Microsoft.UI.Xaml.Markup.winmd
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\App.g.i.cs
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\App.g.cs
@@ -31,7 +30,6 @@ S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x8
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\FullPlatformPublisher.exe
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\FullPlatformPublisher.pdb
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\ResourceHandlingTask.state
-S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\FxResources.System.Xml.XPath.XmlDocument.SR.resw
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\priconfig.xml
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\priconfig.xml.intermediate
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\unfiltered.layout.resfiles
@@ -47,14 +45,8 @@ S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x8
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\qualifiers.txt
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\qualifiers.txt.intermediate
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\MultipleQualifiersPerDimensionFound.txt
-S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\resources.en-us.resfiles
-S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\resources.en-us.resfiles.intermediate
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\ProjectArchitectures.txt
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\.winmd_cache\$Microsoft.UI.Xaml.Markup.winmd_637112318540000000.json
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\.winmd_cache\$Microsoft.Graphics.Canvas.winmd_637214246760000000.json
-S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\Aliyun.OSS.dll
-S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\Aliyun.OSS.pdb
-S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\Aliyun.OSS\zh-CN\Aliyun.OSS.Domain.OssResources.resw
-S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x86\Debug\Aliyun.OSS\zh-CN\Aliyun.OSS.Properties.Resources.resw
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\Microsoft.Graphics.Canvas.dll
 S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\Microsoft.Graphics.Canvas.winmd

@@ -30,29 +30,21 @@
     <AppXManifest Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\Core\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2020-06-07T08:04:03.800</Modified>
+      <Modified>2020-06-08T15:51:11.131</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\FullPlatformPublisher.exe">
       <PackagePath>entrypoint\FullPlatformPublisher.exe</PackagePath>
-      <Modified>2020-06-07T08:04:02.932</Modified>
+      <Modified>2020-06-08T15:51:10.259</Modified>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\aliyun.oss.sdk\2.10.0\lib\Aliyun.OSS.dll">
-      <PackagePath>Aliyun.OSS.dll</PackagePath>
-      <Modified>2020-04-09T19:30:56.000</Modified>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\htmlagilitypack\1.11.23\lib\uap10.0\HtmlAgilityPack.dll">
+    <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\htmlagilitypack\1.11.24\lib\uap10.0\HtmlAgilityPack.dll">
       <PackagePath>HtmlAgilityPack.dll</PackagePath>
-      <Modified>2020-03-22T05:47:34.000</Modified>
+      <Modified>2020-05-30T10:58:14.000</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\runtime.win10-x86.microsoft.netcore.universalwindowsplatform\6.2.10\runtimes\win10-x86\lib\uap10.0.15138\System.Runtime.dll">
       <PackagePath>System.Runtime.dll</PackagePath>
       <Modified>2020-02-27T11:16:04.000</Modified>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\system.xml.xpath.xmldocument\4.3.0\lib\netstandard1.3\System.Xml.XPath.XmlDocument.dll">
-      <PackagePath>System.Xml.XPath.XmlDocument.dll</PackagePath>
-      <Modified>2016-11-04T20:57:34.000</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\win2d.uwp\1.25.0\runtimes\win10-x86\native\Microsoft.Graphics.Canvas.dll">
       <PackagePath>Microsoft.Graphics.Canvas.dll</PackagePath>
@@ -178,11 +170,11 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\App.xbf">
       <PackagePath>App.xbf</PackagePath>
-      <Modified>2020-06-07T08:02:05.922</Modified>
+      <Modified>2020-06-08T15:49:43.326</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\MainPage.xbf">
       <PackagePath>MainPage.xbf</PackagePath>
-      <Modified>2020-06-07T08:02:05.922</Modified>
+      <Modified>2020-06-08T15:49:43.326</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Program Files %28x86%29\Microsoft SDKs\Windows Kits\10\ExtensionSDKs\Microsoft.UniversalCRT.Debug\10.0.19041.0\\redist\Debug\x86\ucrtbased.dll">
       <PackagePath>ucrtbased.dll</PackagePath>
@@ -198,11 +190,11 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\resources.pri">
       <PackagePath>resources.pri</PackagePath>
-      <Modified>2020-06-06T13:39:56.366</Modified>
+      <Modified>2020-06-08T14:25:51.317</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\Core\FullPlatformPublisher.exe">
       <PackagePath>FullPlatformPublisher.exe</PackagePath>
-      <Modified>2020-06-07T08:04:03.794</Modified>
+      <Modified>2020-06-08T15:51:11.126</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>

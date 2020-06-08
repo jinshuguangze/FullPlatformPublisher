@@ -28,17 +28,11 @@
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\FullPlatformPublisher.exe">
       <PackagePath>entrypoint\FullPlatformPublisher.exe</PackagePath>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\aliyun.oss.sdk\2.10.0\lib\Aliyun.OSS.dll">
-      <PackagePath>Aliyun.OSS.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\htmlagilitypack\1.11.23\lib\uap10.0\HtmlAgilityPack.dll">
+    <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\htmlagilitypack\1.11.24\lib\uap10.0\HtmlAgilityPack.dll">
       <PackagePath>HtmlAgilityPack.dll</PackagePath>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\runtime.win10-x86.microsoft.netcore.universalwindowsplatform\6.2.10\runtimes\win10-x86\lib\uap10.0.15138\System.Runtime.dll">
       <PackagePath>System.Runtime.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\system.xml.xpath.xmldocument\4.3.0\lib\netstandard1.3\System.Xml.XPath.XmlDocument.dll">
-      <PackagePath>System.Xml.XPath.XmlDocument.dll</PackagePath>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\win2d.uwp\1.25.0\runtimes\win10-x86\native\Microsoft.Graphics.Canvas.dll">
       <PackagePath>Microsoft.Graphics.Canvas.dll</PackagePath>
