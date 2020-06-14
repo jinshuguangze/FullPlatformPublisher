@@ -24,6 +24,12 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.Web.Http;
 
+// TODO：
+// 双击事件：md和html文件进行绑定，双击任意都会打开html视图
+// 另外，关于OPENedFile，双击任意时，也会扩展找到对应html或md的文件，如果没有，则暂时缺失。
+// 打开按钮去掉，同步按钮变成图片替换上传按钮，增加一个生成特异html的按钮
+// 头条那几个选择框变为下拉菜单
+// 关于图片重新排序等等
 namespace FullPlatformPublisher
 {
     public sealed partial class MainPage : Page
@@ -184,6 +190,7 @@ namespace FullPlatformPublisher
 
                 // 本地图像处理
                 int i = 0;
+                ArrayList mdImageUriArray = new ArrayList();
                 foreach (string mdImagePath in mdImagePathArray)
                 {
                     // 读取素材图像
@@ -267,26 +274,43 @@ namespace FullPlatformPublisher
                         await canvasRenderTarget.SaveAsync(await storageFile.OpenAsync(FileAccessMode.ReadWrite), CanvasBitmapFileFormat.Gif);
 
                         // 上传图像文件至图床
-                        try
-                        {
-                            HttpMultipartFormDataContent dataContent = new HttpMultipartFormDataContent();
-                            HttpStreamContent streamContent = new HttpStreamContent(await storageFile.OpenAsync(FileAccessMode.Read));
-                            // 生成表单
-                            dataContent.Add(streamContent, "image", System.DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + ".gif");
-                            dataContent.Add(new HttpStringContent(PostType), "apiType");
-                            dataContent.Add(new HttpStringContent(PostToken), "token");
-                            HttpClient httpClient = new HttpClient();
-                            // 上传并得到回应
-                            HttpResponseMessage response = await httpClient.PostAsync(new Uri(PostUrl), dataContent).AsTask();
+                        HttpMultipartFormDataContent dataContent = new HttpMultipartFormDataContent();
+                        HttpStreamContent streamContent = new HttpStreamContent(await storageFile.OpenAsync(FileAccessMode.Read));
+                        // 生成表单
+                        dataContent.Add(streamContent, "image", System.DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + ".gif");
+                        dataContent.Add(new HttpStringContent(PostType), "apiType");
+                        dataContent.Add(new HttpStringContent(PostToken), "token");
+                        HttpClient httpClient = new HttpClient();
+                        // 上传并得到回应
+                        HttpResponseMessage response = await httpClient.PostAsync(new Uri(PostUrl), dataContent).AsTask();
 
-                            JsonObject jsonObject = JsonObject.Parse(await response.Content.ReadAsStringAsync());
-                        }
-                        catch
+                        // 读取json文件
+                        JsonObject jsonObject = JsonObject.Parse(await response.Content.ReadAsStringAsync());
+                        int postCode = (int)jsonObject.GetNamedNumber("code");
+                        if (postCode == 200)
                         {
-                            throw;
+                            string imageUri = "";
+                            try
+                            {
+                                imageUri = jsonObject.GetNamedObject("data").GetNamedObject("url").GetNamedString(PostType);
+                            }
+                            catch 
+                            {
+                                System.Diagnostics.Debug.WriteLine("位于"+storageFile.Path+"的文件上传成功！但无法获取uri，请稍后再次尝试上传！");
+                                mdImageUriArray.Add("");
+                                continue;
+                            }
+                            mdImageUriArray.Add(imageUri);
+                        }
+                        else 
+                        {
+                            System.Diagnostics.Debug.WriteLine("位于" + storageFile.Path + "的文件上传失败！请稍后再次尝试上传！");
+                            mdImageUriArray.Add("");
                         }
                     }
                 }
+
+
             }
         }
 
