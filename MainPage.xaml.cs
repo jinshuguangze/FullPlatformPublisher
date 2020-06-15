@@ -77,78 +77,15 @@ namespace FullPlatformPublisher
             this.InitializeComponent();
         }
 
-        // 点击打开按钮
-        private async void button_open_Click(object sender, RoutedEventArgs e)
+        // 点击新建按钮
+        private void button_new_Click(object sender, RoutedEventArgs e)
         {
-            // 创建文件选择器
-            var picker = new Windows.Storage.Pickers.FileOpenPicker
-            {
-                ViewMode = Windows.Storage.Pickers.PickerViewMode.List,
-                SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.ComputerFolder
-            };
-            picker.FileTypeFilter.Add(".html");
-            StorageFile file = await picker.PickSingleFileAsync();
-            if (file != null)
-            {
-                // 存储文件字段
-                TheOpenedFile.LinkedHtmlFile = file;
 
-                // 显示打开的html文件
-                string preHtml = await FileIO.ReadTextAsync(file);
-                webView_viewer.NavigateToString(preHtml);
-
-                // html通用预处理
-                TheOpenedFile.Html = htmlPreprocessing(preHtml);
-            }
         }
 
-        // html预处理函数
-        private static string htmlPreprocessing(string html)
+        // 点击上传图片按钮
+        private async void button_uploadImage_ClickAsync(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                int a, b = 0;
-                // 获取首标题
-                a = html.IndexOf("<h1", StringComparison.CurrentCulture) + 3;
-                b = html.IndexOf("<!-- omit in toc --></h1>", StringComparison.CurrentCulture) - 1;
-                TheOpenedFile.Title = html.Substring(a, b - a + 1).Split('>')[1].Trim('\n', '\r', ' ');
-
-                // 去掉html两端多余信息
-                a = html.IndexOf("</h1>", StringComparison.CurrentCulture) + 5;
-                b = html.IndexOf("</div>", StringComparison.CurrentCulture) - 1;
-                html = html.Substring(a, b - a + 1).Trim('\n', '\r', ' ');
-
-                // 给html加上一个通用的父集
-                html = html.Insert(0, "<div>");
-                html = html.Insert(html.Length, "</div>");
-            }
-            catch (Exception e)
-            {
-                System.Diagnostics.Debug.WriteLine(e);
-                System.Diagnostics.Debug.WriteLine("预处理异常！");
-            }
-            return html;
-        }
-
-        // 点击同步按钮
-        private async void button_synchronize_ClickAsync(object sender, RoutedEventArgs e)
-        {
-            if (checkBox_toutiao.IsChecked == true)
-            {
-                if (TheOpenedFile.Html == null)
-                {
-                    return;
-                }
-
-                // 处理头条html
-                TheOpenedFile.ToutiaoHtml = toutiaoHtmlProcessing(TheOpenedFile.Html);
-
-                // 设置粘贴板内容
-                DataPackage ToutiaoHtmlDataPackage = new DataPackage();
-                ToutiaoHtmlDataPackage.SetText(TheOpenedFile.ToutiaoHtml);
-                Clipboard.SetContent(ToutiaoHtmlDataPackage);
-            }
-
             if (TheOpenedFile.LinkedMdFile != null)
             {
                 // 获取当前文件夹
@@ -211,7 +148,8 @@ namespace FullPlatformPublisher
                     }
 
                     // 读取素材图像
-                    CanvasBitmap basicImage = await CanvasBitmap.LoadAsync(canvasDevice, await imageFile.OpenAsync(FileAccessMode.Read));
+                    CanvasBitmap basicImage = await CanvasBitmap
+                        .LoadAsync(canvasDevice, await imageFile.OpenAsync(FileAccessMode.Read));
 
                     // 自动生成图片基础参数
                     double basicWidth = basicImage.Size.Width;
@@ -293,12 +231,13 @@ namespace FullPlatformPublisher
                         dataContent.Add(new HttpStringContent(PostToken), "token");
                         HttpClient httpClient = new HttpClient();
 
-                        // 上传并得到回应
+                        // 得到回应并得到网络地址
                         using (HttpResponseMessage response = await httpClient.PostAsync(new Uri(PostUrl), dataContent).AsTask())
                         {
                             // 读取json文件
                             JsonObject jsonObject = JsonObject.Parse(await response.Content.ReadAsStringAsync());
                             int postCode = (int)jsonObject.GetNamedNumber("code");
+                            // 代码为200则成功
                             if (postCode == 200)
                             {
                                 string imageUri = "";
@@ -314,6 +253,7 @@ namespace FullPlatformPublisher
                                 }
                                 mdImageUriArray.Add(imageUri);
                             }
+                            // 代码不为200则失败
                             else
                             {
                                 System.Diagnostics.Debug.WriteLine("位于" + storageFile.Path + "的文件上传失败！请稍后再次尝试上传！");
@@ -324,6 +264,54 @@ namespace FullPlatformPublisher
                 }
                 System.Diagnostics.Debug.WriteLine(mdImageUriArray);
             }
+        }
+
+        // 点击生成文章按钮
+        private void button_generateHtml_Click(object sender, RoutedEventArgs e)
+        {
+            if (checkBox_toutiao.IsChecked == true)
+            {
+                if (TheOpenedFile.Html == null)
+                {
+                    return;
+                }
+
+                // 处理头条html
+                TheOpenedFile.ToutiaoHtml = toutiaoHtmlProcessing(TheOpenedFile.Html);
+
+                // 设置粘贴板内容
+                DataPackage ToutiaoHtmlDataPackage = new DataPackage();
+                ToutiaoHtmlDataPackage.SetText(TheOpenedFile.ToutiaoHtml);
+                Clipboard.SetContent(ToutiaoHtmlDataPackage);
+            }
+        }
+
+        // html预处理函数
+        private static string htmlPreprocessing(string html)
+        {
+            try
+            {
+                int a, b = 0;
+                // 获取首标题
+                a = html.IndexOf("<h1", StringComparison.CurrentCulture) + 3;
+                b = html.IndexOf("<!-- omit in toc --></h1>", StringComparison.CurrentCulture) - 1;
+                TheOpenedFile.Title = html.Substring(a, b - a + 1).Split('>')[1].Trim('\n', '\r', ' ');
+
+                // 去掉html两端多余信息
+                a = html.IndexOf("</h1>", StringComparison.CurrentCulture) + 5;
+                b = html.IndexOf("</div>", StringComparison.CurrentCulture) - 1;
+                html = html.Substring(a, b - a + 1).Trim('\n', '\r', ' ');
+
+                // 给html加上一个通用的父集
+                html = html.Insert(0, "<div>");
+                html = html.Insert(html.Length, "</div>");
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine(e);
+                System.Diagnostics.Debug.WriteLine("预处理异常！");
+            }
+            return html;
         }
 
         // 今日头条html处理
@@ -877,12 +865,6 @@ namespace FullPlatformPublisher
 
             // 在线网页处理：暂不做处理
             // TODO：在线给已外链添加<u></u>
-        }
-
-        // 新建文件
-        private void button_new_Click(object sender, RoutedEventArgs e)
-        {
-
         }
 
         // 初始化网格视图
@@ -1637,12 +1619,6 @@ namespace FullPlatformPublisher
                 BitmapEncoder encoder = await BitmapEncoder
                     .CreateAsync(BitmapEncoder.GifEncoderId, streamEncoder);
                 encoder.SetSoftwareBitmap(softwareBitmap);
-
-                // 将图像固定为1920宽度，并使用Cubic插值（不一定必须）
-                //encoder.BitmapTransform.ScaledWidth = 1920;
-                //encoder.BitmapTransform.ScaledHeight = (uint)(Math.Round(
-                //    ((double)softwareBitmap.PixelHeight / (double)softwareBitmap.PixelWidth) * (double)1920));
-                //encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Cubic;
 
                 // 尝试写入编码流
                 try

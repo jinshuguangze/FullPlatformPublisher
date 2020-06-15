@@ -15,10 +15,10 @@
             <CheckBox x:Name="checkBox_zhihu" Content="知乎专栏" Canvas.Left="10" Canvas.Top="84" IsChecked="True" VerticalAlignment="Top"/>
             <CheckBox x:Name="checkBox_bilibili" Content="哔哩哔哩专栏" Canvas.Left="10" Canvas.Top="121" IsChecked="True" VerticalAlignment="Top"/>
             <CheckBox x:Name="checkBox_dayu" Content="大鱼号" Canvas.Left="10" Canvas.Top="158" IsChecked="True" VerticalAlignment="Top"/>
-            <Button x:Name="button_open" Content="打开" Canvas.Left="22" Canvas.Top="414" Height="58" Width="92" RenderTransformOrigin="0.5,0.517" Click="button_open_Click"/>
-            <Button x:Name="button_synchronize" Content="同步" Canvas.Left="22" Canvas.Top="477" Height="58" Width="92" Click="button_synchronize_ClickAsync" RenderTransformOrigin="0.5,0.5" HorizontalContentAlignment="Center"/>
+            <Button x:Name="button_generateHtml" Content="生成文章" Canvas.Left="22" Canvas.Top="477" Height="58" Width="92" Click="button_generateHtml_Click" RenderTransformOrigin="0.5,0.5" HorizontalContentAlignment="Center"/>
             <winUiControls:SplitButton x:Name="splitButton_new" Content="新建" Canvas.Left="22" Canvas.Top="351" Height="58" Width="92" Padding="8,5,8,6" VerticalContentAlignment="Center" HorizontalAlignment="Left"/>
             <ToggleSwitch x:Name="toggleSwitch_spy" Header="打开剪贴板监管" Canvas.Top="295" Width="100" HorizontalContentAlignment="Left" ScrollViewer.VerticalScrollBarVisibility="Disabled" Canvas.Left="18" HorizontalAlignment="Left" Toggled="toggleSwitch_spy_Toggled"/>
+            <Button x:Name="button_uploadImage" Content="上传图片" Canvas.Left="22" Canvas.Top="414" Height="58" Width="92" Click="button_uploadImage_ClickAsync" RenderTransformOrigin="0.5,0.5" HorizontalContentAlignment="Center"/>
         </Canvas>
         <WebView x:Name="webView_viewer" Canvas.Left="135" Source="https://mp.toutiao.com/profile_v3/index" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Width="420" Height="545"/>
         <TextBox x:Name="textBox_path" Canvas.Left="555" Text="Papers" TextWrapping="Wrap" Height="35" Width="350"/>
