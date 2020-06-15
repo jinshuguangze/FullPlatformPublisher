@@ -294,15 +294,15 @@ namespace FullPlatformPublisher
                             {
                                 imageUri = jsonObject.GetNamedObject("data").GetNamedObject("url").GetNamedString(PostType);
                             }
-                            catch 
+                            catch
                             {
-                                System.Diagnostics.Debug.WriteLine("位于"+storageFile.Path+"的文件上传成功！但无法获取uri，请稍后再次尝试上传！");
+                                System.Diagnostics.Debug.WriteLine("位于" + storageFile.Path + "的文件上传成功！但无法获取uri，请稍后再次尝试上传！");
                                 mdImageUriArray.Add("");
                                 continue;
                             }
                             mdImageUriArray.Add(imageUri);
                         }
-                        else 
+                        else
                         {
                             System.Diagnostics.Debug.WriteLine("位于" + storageFile.Path + "的文件上传失败！请稍后再次尝试上传！");
                             mdImageUriArray.Add("");
@@ -935,8 +935,10 @@ namespace FullPlatformPublisher
                     // 图标加入双击事件绑定，打开相关文件
                     image.DoubleTapped += async (sender, e) =>
                     {
+                        // 图片文件的双击事件
                         if (Array.Exists<string>(SupportImageTypes, s => s.Equals("." + fileType)))
                         {
+                            // 视图显示图片文件
                             try
                             {
                                 webView_viewer.NavigateToString(
@@ -950,30 +952,58 @@ namespace FullPlatformPublisher
                                     "图像" + file.Name + "打开失败，它的路径为：" + file.Path);
                             }
                         }
+                        // 其他文件的双击事件
                         else
                         {
+                            StorageFile linkedMdFile = null;
+                            StorageFile linkedHtmlFile = null;
                             if (fileType.Equals("md"))
                             {
-                                // 存储文件字段
-                                TheOpenedFile.File = file;
+                                linkedMdFile = file;
+                                try
+                                {
+                                    linkedHtmlFile = await (await file.GetParentAsync())
+                                        .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf(".")) + "html");
+                                }
+                                catch (FileNotFoundException fnfe)
+                                {
+                                    System.Diagnostics.Debug.WriteLine(fnfe);
+                                    System.Diagnostics.Debug.WriteLine("文件" + file.Name + "的对应html文件缺失，路径为：" + file.Path);
+                                    return;
+                                }
                             }
                             else if (fileType.Equals("html"))
                             {
-                                // 存储文件字段
-                                TheOpenedFile.File = file;
-
-                                // 显示打开的html文件
-                                string preHtml = await Windows.Storage.FileIO.ReadTextAsync(file);
-                                webView_viewer.NavigateToString(preHtml);
-
-                                // html通用预处理
-                                TheOpenedFile.Html = htmlPreprocessing(preHtml);
+                                linkedHtmlFile = file;
+                                try
+                                {
+                                    linkedMdFile = await (await file.GetParentAsync())
+                                        .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf(".")) + "md");
+                                }
+                                catch (FileNotFoundException fnfe)
+                                {
+                                    System.Diagnostics.Debug.WriteLine(fnfe);
+                                    System.Diagnostics.Debug.WriteLine("文件" + file.Name + "的对应md文件缺失，路径为：" + file.Path);
+                                    return;
+                                }
                             }
 
+                            // 如果双向绑定成功
+                            if (linkedMdFile != null && linkedHtmlFile != null)
+                            {
+                                // 存储已打开文件对象
+                                TheOpenedFile.LinkedMdFile = linkedMdFile;
+                                TheOpenedFile.LinkedHtmlFile = linkedHtmlFile;
+                                TheOpenedFile.Html = htmlPreprocessing(await FileIO.ReadTextAsync(linkedHtmlFile));
+
+                                // 视图统一显示html的文件
+                                file = linkedHtmlFile;
+                            }
+
+                            // 视图显示其他文件
                             try
                             {
-                                webView_viewer.NavigateToString(await
-                                        Windows.Storage.FileIO.ReadTextAsync(file));
+                                webView_viewer.NavigateToString(await FileIO.ReadTextAsync(file));
                             }
                             catch
                             {
@@ -1691,8 +1721,11 @@ namespace FullPlatformPublisher
     // 当前打开的文件
     public class OpenedFile
     {
-        // 通用字段
-        public StorageFile File { get; internal set; }
+        // 链接的md文件
+        public StorageFile LinkedMdFile { get; internal set; }
+
+        // 链接的html文件
+        public StorageFile LinkedHtmlFile { get; internal set; }
 
         // html字段
         // 文章标题
