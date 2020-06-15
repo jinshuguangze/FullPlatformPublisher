@@ -81,18 +81,20 @@ namespace FullPlatformPublisher
         private async void button_open_Click(object sender, RoutedEventArgs e)
         {
             // 创建文件选择器
-            var picker = new Windows.Storage.Pickers.FileOpenPicker();
-            picker.ViewMode = Windows.Storage.Pickers.PickerViewMode.List;
-            picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.ComputerFolder;
+            var picker = new Windows.Storage.Pickers.FileOpenPicker
+            {
+                ViewMode = Windows.Storage.Pickers.PickerViewMode.List,
+                SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.ComputerFolder
+            };
             picker.FileTypeFilter.Add(".html");
-            Windows.Storage.StorageFile file = await picker.PickSingleFileAsync();
+            StorageFile file = await picker.PickSingleFileAsync();
             if (file != null)
             {
                 // 存储文件字段
-                TheOpenedFile.File = file;
+                TheOpenedFile.LinkedHtmlFile = file;
 
                 // 显示打开的html文件
-                string preHtml = await Windows.Storage.FileIO.ReadTextAsync(file);
+                string preHtml = await FileIO.ReadTextAsync(file);
                 webView_viewer.NavigateToString(preHtml);
 
                 // html通用预处理
@@ -147,14 +149,13 @@ namespace FullPlatformPublisher
                 Clipboard.SetContent(ToutiaoHtmlDataPackage);
             }
 
-            // ---------暂时没想好怎么处理---------
-            if (TheOpenedFile.File.FileType.Equals(".md"))
+            if (TheOpenedFile.LinkedMdFile != null)
             {
                 // 获取当前文件夹
-                StorageFolder currentFolder = await TheOpenedFile.File.GetParentAsync();
+                StorageFolder currentFolder = await TheOpenedFile.LinkedMdFile.GetParentAsync();
 
                 // 获取md文件所有本地图片名称
-                string mdText = await Windows.Storage.FileIO.ReadTextAsync(TheOpenedFile.File);
+                string mdText = await FileIO.ReadTextAsync(TheOpenedFile.LinkedMdFile);
                 ArrayList mdImagePathArray = new ArrayList();
                 ArrayList mdImageNoteArray = new ArrayList();
                 foreach (Match match in Regex.Matches(mdText, "!\\[[^\\]]*\\]\\([^\\)]+\\)"))
@@ -174,7 +175,7 @@ namespace FullPlatformPublisher
                     }
                     else
                     {
-                        mdImagePathArray.Add("");
+                        mdImagePathArray.Add(null);
                     }
                 }
 
@@ -193,13 +194,23 @@ namespace FullPlatformPublisher
                 ArrayList mdImageUriArray = new ArrayList();
                 foreach (string mdImagePath in mdImagePathArray)
                 {
-                    // 读取素材图像
+                    i++;
+                    // 如果图片已经为网络图片
+                    if (mdImagePath == null)
+                    {
+                        System.Diagnostics.Debug.WriteLine("图片不为本地图片，已经自动跳过。");
+                        continue;
+                    }
+
+                    // 如果图片引用丢失
                     StorageFile imageFile = await getFileFromUri(currentFolder, mdImagePath);
                     if (imageFile == null)
                     {
-                        System.Diagnostics.Debug.WriteLine("本地文件" + mdImagePath + "丢失！已经自动跳过，请稍后手动上传。");
+                        System.Diagnostics.Debug.WriteLine("本地文件\"" + mdImagePath + "\"丢失！已经自动跳过，请稍后手动上传。");
                         continue;
                     }
+
+                    // 读取素材图像
                     CanvasBitmap basicImage = await CanvasBitmap.LoadAsync(canvasDevice, await imageFile.OpenAsync(FileAccessMode.Read));
 
                     // 自动生成图片基础参数
@@ -228,7 +239,7 @@ namespace FullPlatformPublisher
                     double textLength = basicWidth - logoLength - imageBound;
 
                     // 自动生成字体格式
-                    string note = mdImageNoteArray[i++] as string;
+                    string note = mdImageNoteArray[i - 1] as string;
                     if (note.Equals(""))
                     {
                         // 如果没有注释，则使用默认注释格式
@@ -270,7 +281,7 @@ namespace FullPlatformPublisher
                         }
                         // 生成处理后的图像文件
                         StorageFile storageFile = await (await currentFolder.CreateFolderAsync(ProcessedImages, CreationCollisionOption.OpenIfExists))
-                        .CreateFileAsync(imageFile.Name, CreationCollisionOption.ReplaceExisting);
+                            .CreateFileAsync(i + ".gif", CreationCollisionOption.ReplaceExisting);
                         await canvasRenderTarget.SaveAsync(await storageFile.OpenAsync(FileAccessMode.ReadWrite), CanvasBitmapFileFormat.Gif);
 
                         // 上传图像文件至图床
@@ -281,36 +292,37 @@ namespace FullPlatformPublisher
                         dataContent.Add(new HttpStringContent(PostType), "apiType");
                         dataContent.Add(new HttpStringContent(PostToken), "token");
                         HttpClient httpClient = new HttpClient();
-                        // 上传并得到回应
-                        HttpResponseMessage response = await httpClient.PostAsync(new Uri(PostUrl), dataContent).AsTask();
 
-                        // 读取json文件
-                        JsonObject jsonObject = JsonObject.Parse(await response.Content.ReadAsStringAsync());
-                        int postCode = (int)jsonObject.GetNamedNumber("code");
-                        if (postCode == 200)
+                        // 上传并得到回应
+                        using (HttpResponseMessage response = await httpClient.PostAsync(new Uri(PostUrl), dataContent).AsTask())
                         {
-                            string imageUri = "";
-                            try
+                            // 读取json文件
+                            JsonObject jsonObject = JsonObject.Parse(await response.Content.ReadAsStringAsync());
+                            int postCode = (int)jsonObject.GetNamedNumber("code");
+                            if (postCode == 200)
                             {
-                                imageUri = jsonObject.GetNamedObject("data").GetNamedObject("url").GetNamedString(PostType);
+                                string imageUri = "";
+                                try
+                                {
+                                    imageUri = jsonObject.GetNamedObject("data").GetNamedObject("url").GetNamedString(PostType);
+                                }
+                                catch
+                                {
+                                    System.Diagnostics.Debug.WriteLine("位于" + storageFile.Path + "的文件上传成功！但无法获取uri，请稍后再次尝试上传！");
+                                    mdImageUriArray.Add("");
+                                    continue;
+                                }
+                                mdImageUriArray.Add(imageUri);
                             }
-                            catch
+                            else
                             {
-                                System.Diagnostics.Debug.WriteLine("位于" + storageFile.Path + "的文件上传成功！但无法获取uri，请稍后再次尝试上传！");
+                                System.Diagnostics.Debug.WriteLine("位于" + storageFile.Path + "的文件上传失败！请稍后再次尝试上传！");
                                 mdImageUriArray.Add("");
-                                continue;
                             }
-                            mdImageUriArray.Add(imageUri);
-                        }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine("位于" + storageFile.Path + "的文件上传失败！请稍后再次尝试上传！");
-                            mdImageUriArray.Add("");
                         }
                     }
                 }
-
-
+                System.Diagnostics.Debug.WriteLine(mdImageUriArray);
             }
         }
 
@@ -924,6 +936,8 @@ namespace FullPlatformPublisher
                     // 图标加入双击事件绑定，打开文件夹
                     image.DoubleTapped += (sender, e) =>
                     {
+                        // 清空打开文件对象，显示文件夹子视图
+                        TheOpenedFile = new OpenedFile();
                         addGridElementAsync(uri + "/" + item.Name);
                     };
                 }
@@ -935,6 +949,9 @@ namespace FullPlatformPublisher
                     // 图标加入双击事件绑定，打开相关文件
                     image.DoubleTapped += async (sender, e) =>
                     {
+                        // 清空打开文件对象
+                        TheOpenedFile = new OpenedFile();
+
                         // 图片文件的双击事件
                         if (Array.Exists<string>(SupportImageTypes, s => s.Equals("." + fileType)))
                         {
@@ -963,7 +980,7 @@ namespace FullPlatformPublisher
                                 try
                                 {
                                     linkedHtmlFile = await (await file.GetParentAsync())
-                                        .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf(".")) + "html");
+                                        .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf(".")) + ".html");
                                 }
                                 catch (FileNotFoundException fnfe)
                                 {
@@ -978,7 +995,7 @@ namespace FullPlatformPublisher
                                 try
                                 {
                                     linkedMdFile = await (await file.GetParentAsync())
-                                        .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf(".")) + "md");
+                                        .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf(".")) + ".md");
                                 }
                                 catch (FileNotFoundException fnfe)
                                 {

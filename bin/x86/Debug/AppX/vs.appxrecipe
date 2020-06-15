@@ -19,7 +19,7 @@
     <DeployOptionalPackages>false</DeployOptionalPackages>
     <WindowsSdkPath>S:\Windows Kits\10\</WindowsSdkPath>
     <LayoutDir>S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\AppX</LayoutDir>
-    <RegisteredManifestChecksum>43528E32B3C54D2E6F3987F7DBF6C57B0323E0900C10C13528FA087ED0B54CEF</RegisteredManifestChecksum>
+    <RegisteredManifestChecksum>7DEC702940B67C431167AC56D1A5A2CE1322AA003119349C1E1FEA512691B516</RegisteredManifestChecksum>
     <RegisteredPackageMoniker>c74cd63b-07e4-4814-9cf5-094574954728_1.0.0.0_x86__jrf93qhg7j2f4</RegisteredPackageMoniker>
     <RegisteredUserModeAppID>c74cd63b-07e4-4814-9cf5-094574954728_jrf93qhg7j2f4!App</RegisteredUserModeAppID>
     <RegisteredPackageID>c74cd63b-07e4-4814-9cf5-094574954728</RegisteredPackageID>
@@ -30,13 +30,13 @@
     <AppXManifest Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\Core\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2020-06-08T15:51:11.131</Modified>
+      <Modified>2020-06-15T12:48:31.021</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\FullPlatformPublisher.exe">
       <PackagePath>entrypoint\FullPlatformPublisher.exe</PackagePath>
-      <Modified>2020-06-08T15:51:10.259</Modified>
+      <Modified>2020-06-15T12:48:30.171</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\htmlagilitypack\1.11.24\lib\uap10.0\HtmlAgilityPack.dll">
       <PackagePath>HtmlAgilityPack.dll</PackagePath>
@@ -170,11 +170,11 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\App.xbf">
       <PackagePath>App.xbf</PackagePath>
-      <Modified>2020-06-08T15:49:43.326</Modified>
+      <Modified>2020-06-15T12:48:29.961</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\MainPage.xbf">
       <PackagePath>MainPage.xbf</PackagePath>
-      <Modified>2020-06-08T15:49:43.326</Modified>
+      <Modified>2020-06-15T12:48:29.961</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Program Files %28x86%29\Microsoft SDKs\Windows Kits\10\ExtensionSDKs\Microsoft.UniversalCRT.Debug\10.0.19041.0\\redist\Debug\x86\ucrtbased.dll">
       <PackagePath>ucrtbased.dll</PackagePath>
@@ -190,11 +190,11 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\resources.pri">
       <PackagePath>resources.pri</PackagePath>
-      <Modified>2020-06-08T14:25:51.317</Modified>
+      <Modified>2020-06-15T08:22:40.282</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x86\Debug\Core\FullPlatformPublisher.exe">
       <PackagePath>FullPlatformPublisher.exe</PackagePath>
-      <Modified>2020-06-08T15:51:11.126</Modified>
+      <Modified>2020-06-15T12:48:31.010</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>
