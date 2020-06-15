@@ -25,8 +25,6 @@ using Windows.UI.Xaml.Media.Imaging;
 using Windows.Web.Http;
 
 // TODO：
-// 双击事件：md和html文件进行绑定，双击任意都会打开html视图
-// 另外，关于OPENedFile，双击任意时，也会扩展找到对应html或md的文件，如果没有，则暂时缺失。
 // 打开按钮去掉，同步按钮变成图片替换上传按钮，增加一个生成特异html的按钮
 // 头条那几个选择框变为下拉菜单
 // 关于图片重新排序等等
@@ -136,6 +134,7 @@ namespace FullPlatformPublisher
                     if (mdImagePath == null)
                     {
                         System.Diagnostics.Debug.WriteLine("图片不为本地图片，已经自动跳过。");
+                        mdImageUriArray.Add("");
                         continue;
                     }
 
@@ -144,6 +143,7 @@ namespace FullPlatformPublisher
                     if (imageFile == null)
                     {
                         System.Diagnostics.Debug.WriteLine("本地文件\"" + mdImagePath + "\"丢失！已经自动跳过，请稍后手动上传。");
+                        mdImageUriArray.Add("");
                         continue;
                     }
 
@@ -230,39 +230,51 @@ namespace FullPlatformPublisher
                         dataContent.Add(new HttpStringContent(PostType), "apiType");
                         dataContent.Add(new HttpStringContent(PostToken), "token");
                         HttpClient httpClient = new HttpClient();
-
-                        // 得到回应并得到网络地址
+                        // 得到回应
+                        string json = string.Empty;
                         using (HttpResponseMessage response = await httpClient.PostAsync(new Uri(PostUrl), dataContent).AsTask())
                         {
-                            // 读取json文件
-                            JsonObject jsonObject = JsonObject.Parse(await response.Content.ReadAsStringAsync());
-                            int postCode = (int)jsonObject.GetNamedNumber("code");
-                            // 代码为200则成功
-                            if (postCode == 200)
+                            json = await response.Content.ReadAsStringAsync();
+                        }
+
+                        // 读取json文件并得到网络地址
+                        if (string.IsNullOrEmpty(json))
+                        {
+                            System.Diagnostics.Debug.WriteLine("图床服务器未响应！请稍后再次尝试上传！");
+                            mdImageUriArray.Add("");
+                            continue;
+                        }
+                        JsonObject jsonObject = JsonObject.Parse(json);
+                        int postCode = (int)jsonObject.GetNamedNumber("code");
+                        // 代码为200则成功
+                        if (postCode == 200)
+                        {
+                            string imageUri = "";
+                            try
                             {
-                                string imageUri = "";
-                                try
-                                {
-                                    imageUri = jsonObject.GetNamedObject("data").GetNamedObject("url").GetNamedString(PostType);
-                                }
-                                catch
-                                {
-                                    System.Diagnostics.Debug.WriteLine("位于" + storageFile.Path + "的文件上传成功！但无法获取uri，请稍后再次尝试上传！");
-                                    mdImageUriArray.Add("");
-                                    continue;
-                                }
-                                mdImageUriArray.Add(imageUri);
+                                imageUri = jsonObject.GetNamedObject("data").GetNamedObject("url").GetNamedString(PostType);
                             }
-                            // 代码不为200则失败
-                            else
+                            catch
                             {
-                                System.Diagnostics.Debug.WriteLine("位于" + storageFile.Path + "的文件上传失败！请稍后再次尝试上传！");
+                                System.Diagnostics.Debug.WriteLine("位于" + storageFile.Path + "的文件上传成功！但无法获取uri，请稍后再次尝试上传！");
                                 mdImageUriArray.Add("");
+                                continue;
                             }
+                            mdImageUriArray.Add(imageUri);
+                        }
+                        // 代码不为200则失败
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine("位于" + storageFile.Path + "的文件上传失败！请稍后再次尝试上传！");
+                            mdImageUriArray.Add("");
+                            continue;
                         }
                     }
                 }
-                System.Diagnostics.Debug.WriteLine(mdImageUriArray);
+                foreach (string tmp in mdImageUriArray)
+                {
+                    System.Diagnostics.Debug.WriteLine(tmp);
+                }
             }
         }
 
@@ -1287,8 +1299,6 @@ namespace FullPlatformPublisher
             }
             StorageFolder originalImagesFolder = await currentFolder
                 .CreateFolderAsync(OriginalImages, CreationCollisionOption.OpenIfExists);
-            StorageFolder processedImagesFolder = await currentFolder
-                .CreateFolderAsync(ProcessedImages, CreationCollisionOption.OpenIfExists);
 
             // Markdown语句
             string markdown = string.Empty;
@@ -1342,15 +1352,8 @@ namespace FullPlatformPublisher
                     return;
                 }
 
-                // 工厂化处理图像文件，如果失败，直接返回
-                imageFile = await factoryImageProcess(imageFile, processedImagesFolder);
-                if (imageFile == null)
-                {
-                    return;
-                }
-
                 // 获取Markdown语句
-                markdown = "![](" + processedImagesFolder.Name + "/" + imageFile.Name + ")\n";
+                markdown = "![](" + originalImagesFolder.Name + "/" + imageFile.Name + ")\n";
             }
 
             // 如果剪贴板内容是Html
@@ -1384,15 +1387,8 @@ namespace FullPlatformPublisher
                             return;
                         }
 
-                        // 工厂化处理图像文件，如果失败，直接返回
-                        imageFile = await factoryImageProcess(imageFile, processedImagesFolder);
-                        if (imageFile == null)
-                        {
-                            return;
-                        }
-
                         // 获取Markdown语句
-                        markdown += "![](" + processedImagesFolder.Name + "/" + imageFile.Name + ")\n";
+                        markdown += "![](" + originalImagesFolder.Name + "/" + imageFile.Name + ")\n";
                     }
                 }
             }
@@ -1422,15 +1418,8 @@ namespace FullPlatformPublisher
                         return;
                     }
 
-                    // 工厂化处理图像文件，如果失败，直接返回
-                    imageFile = await factoryImageProcess(imageFile, processedImagesFolder);
-                    if (imageFile == null)
-                    {
-                        return;
-                    }
-
                     // 获取Markdown语句
-                    markdown = "![](" + processedImagesFolder.Name + "/" + imageFile.Name + ")\n";
+                    markdown = "![](" + originalImagesFolder.Name + "/" + imageFile.Name + ")\n";
                 }
                 else
                 {
@@ -1482,15 +1471,8 @@ namespace FullPlatformPublisher
                         return;
                     }
 
-                    // 工厂化处理图像文件，如果失败，直接返回
-                    imageFileCopy = await factoryImageProcess(imageFileCopy, processedImagesFolder);
-                    if (imageFileCopy == null)
-                    {
-                        return;
-                    }
-
                     // 获取Markdown语句
-                    markdown += "![](" + processedImagesFolder.Name + "/" + imageFileCopy.Name + ")\n";
+                    markdown += "![](" + originalImagesFolder.Name + "/" + imageFileCopy.Name + ")\n";
                 }
             }
 
@@ -1595,44 +1577,6 @@ namespace FullPlatformPublisher
                 await image.RenameAsync(imageName + realExtension, NameCollisionOption.GenerateUniqueName);
             }
             return realExtension;
-        }
-
-        // 工厂化图像处理文件
-        private async Task<StorageFile> factoryImageProcess(StorageFile image, StorageFolder folder)
-        {
-            // 创建解码流
-            SoftwareBitmap softwareBitmap;
-            using (var streamDecoder = await image.OpenAsync(FileAccessMode.Read))
-            {
-                BitmapDecoder decoder = await BitmapDecoder.CreateAsync(streamDecoder);
-                softwareBitmap = await decoder.GetSoftwareBitmapAsync();
-            }
-
-            // 创建输出图像
-            StorageFile outputImage = await folder
-                    .CreateFileAsync(image.Name.Substring(0, image.Name.LastIndexOf('.')) + ".gif"
-                    , CreationCollisionOption.GenerateUniqueName);
-
-            // 创建编码流
-            using (var streamEncoder = await outputImage.OpenAsync(FileAccessMode.ReadWrite))
-            {
-                BitmapEncoder encoder = await BitmapEncoder
-                    .CreateAsync(BitmapEncoder.GifEncoderId, streamEncoder);
-                encoder.SetSoftwareBitmap(softwareBitmap);
-
-                // 尝试写入编码流
-                try
-                {
-                    await encoder.FlushAsync();
-                }
-                catch (Exception e)
-                {
-                    System.Diagnostics.Debug.WriteLine(e);
-                    System.Diagnostics.Debug.WriteLine("创建工厂化图像格式失败！目标图像的路径为：" + image.Path);
-                    return null;
-                }
-            }
-            return outputImage;
         }
 
         // 下载图像Uri到本地
