@@ -89,21 +89,38 @@ namespace FullPlatformPublisher
                 // 获取当前文件夹
                 StorageFolder currentFolder = await TheOpenedFile.LinkedMdFile.GetParentAsync();
 
+                // markdown图片语句的正则匹配
+                string mdImageRegex = "!\\[[^\\]]*\\]\\([^\\)]+\\)";
+
+                // 生成由本地时间生成的hash码作为临时文件的名称
+                string hashcode = DateTime.Now.ToString("yyyyMMddHHmmss").GetHashCode().ToString();
+
                 // 获取md文件所有本地图片名称
                 string mdText = await FileIO.ReadTextAsync(TheOpenedFile.LinkedMdFile);
                 ArrayList mdImagePathArray = new ArrayList();
+                ArrayList mdImageTitleArray = new ArrayList();
                 ArrayList mdImageNoteArray = new ArrayList();
-                foreach (Match match in Regex.Matches(mdText, "!\\[[^\\]]*\\]\\([^\\)]+\\)"))
+                foreach (Match match in Regex.Matches(mdText, mdImageRegex))
                 {
                     // 获取图片评论数组
                     string mdImageNote = match.Value.Substring(match.Value.IndexOf("[") + 1
                         , match.Value.IndexOf("]") - match.Value.IndexOf("[") - 1);
                     mdImageNoteArray.Add(mdImageNote);
 
-                    // 获取图片地址数组
+                    // 获取图片地址数组和图片标题数组
                     string mdImagePath = match.Value.Substring(match.Value.LastIndexOf("(") + 1
                         , match.Value.LastIndexOf(")") - match.Value.LastIndexOf("(") - 1);
-                    mdImagePath = mdImagePath.Split(' ')[0];
+                    string mdImageTitle = "";
+                    if (mdImagePath.IndexOf('"') == -1)
+                    {
+                        mdImagePath = mdImagePath.Trim();
+                    }
+                    else
+                    {
+                        mdImageTitle = mdImagePath.Substring(mdImagePath.IndexOf('"') + 1
+                            , mdImagePath.LastIndexOf('"') - mdImagePath.IndexOf('"') - 1);
+                        mdImagePath = mdImagePath.Substring(0, mdImagePath.IndexOf('"')).Trim();
+                    }
                     if (!(mdImagePath.StartsWith("http://") || mdImagePath.StartsWith("https://")))
                     {
                         mdImagePathArray.Add(mdImagePath);
@@ -112,6 +129,7 @@ namespace FullPlatformPublisher
                     {
                         mdImagePathArray.Add(null);
                     }
+                    mdImageTitleArray.Add(mdImageTitle);
                 }
 
                 // 读取logo图像素材
@@ -122,7 +140,8 @@ namespace FullPlatformPublisher
                     System.Diagnostics.Debug.WriteLine("logo0.png文件已损坏！请检查根目录！");
                     return;
                 }
-                CanvasBitmap logoImage = await CanvasBitmap.LoadAsync(canvasDevice, await logoFile.OpenAsync(FileAccessMode.Read));
+                CanvasBitmap logoImage = await CanvasBitmap.LoadAsync(canvasDevice
+                    , await logoFile.OpenAsync(FileAccessMode.Read));
 
                 // 本地图像处理
                 int i = 0;
@@ -199,6 +218,9 @@ namespace FullPlatformPublisher
                     };
 
                     // 进行拼合
+                    StorageFile processedImageFile = await (await currentFolder.CreateFolderAsync(ProcessedImages
+                        , CreationCollisionOption.OpenIfExists)).CreateFileAsync(hashcode + "#" + i + ".gif", CreationCollisionOption.ReplaceExisting);
+                    // 拼合图像处理
                     using (CanvasRenderTarget canvasRenderTarget = new CanvasRenderTarget(basicImage
                         , new Size(basicWidth + 2 * imageBound, basicHeight + logoLength + 3 * imageBound)))
                     {
@@ -210,7 +232,8 @@ namespace FullPlatformPublisher
                             session.DrawImage(basicImage, (float)imageBound, (float)imageBound);
                             // 渲染logo图像
                             session.DrawImage(logoImage, new Rect(imageBound, basicHeight + 2 * imageBound, logoLength, logoLength)
-                                , new Rect(0.0, 0.0, logoImage.Size.Width, logoImage.Size.Height), (float)1.0, CanvasImageInterpolation.HighQualityCubic);
+                                , new Rect(0.0, 0.0, logoImage.Size.Width, logoImage.Size.Height)
+                                , (float)1.0, CanvasImageInterpolation.HighQualityCubic);
                             // 渲染文本栏目
                             session.DrawText(note, (float)(logoLength + 2 * imageBound), (float)(basicHeight + 2 * imageBound)
                                 , (float)textLength, (float)logoLength, Colors.Black, textFormat);
@@ -218,63 +241,120 @@ namespace FullPlatformPublisher
                             session.Flush();
                         }
                         // 生成处理后的图像文件
-                        StorageFile storageFile = await (await currentFolder.CreateFolderAsync(ProcessedImages, CreationCollisionOption.OpenIfExists))
-                            .CreateFileAsync(i + ".gif", CreationCollisionOption.ReplaceExisting);
-                        await canvasRenderTarget.SaveAsync(await storageFile.OpenAsync(FileAccessMode.ReadWrite), CanvasBitmapFileFormat.Gif);
+                        await canvasRenderTarget.SaveAsync(await processedImageFile.OpenAsync(FileAccessMode.ReadWrite)
+                            , CanvasBitmapFileFormat.Gif);
+                    }
 
-                        // 上传图像文件至图床
-                        HttpMultipartFormDataContent dataContent = new HttpMultipartFormDataContent();
-                        HttpStreamContent streamContent = new HttpStreamContent(await storageFile.OpenAsync(FileAccessMode.Read));
-                        // 生成表单
-                        dataContent.Add(streamContent, "image", System.DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + ".gif");
-                        dataContent.Add(new HttpStringContent(PostType), "apiType");
-                        dataContent.Add(new HttpStringContent(PostToken), "token");
-                        HttpClient httpClient = new HttpClient();
-                        // 得到回应
-                        string json = string.Empty;
-                        using (HttpResponseMessage response = await httpClient.PostAsync(new Uri(PostUrl), dataContent).AsTask())
+                    // 上传图像文件至图床
+                    HttpMultipartFormDataContent dataContent = new HttpMultipartFormDataContent();
+                    HttpStreamContent streamContent = new HttpStreamContent(await processedImageFile.OpenAsync(FileAccessMode.Read));
+                    // 生成表单
+                    dataContent.Add(streamContent, "image", DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + ".gif");
+                    dataContent.Add(new HttpStringContent(PostType), "apiType");
+                    dataContent.Add(new HttpStringContent(PostToken), "token");
+                    HttpClient httpClient = new HttpClient();
+                    // 得到回应
+                    string json = string.Empty;
+                    using (HttpResponseMessage response = await httpClient.PostAsync(new Uri(PostUrl), dataContent).AsTask())
+                    {
+                        json = await response.Content.ReadAsStringAsync();
+                    }
+
+                    // 读取json文件并得到网络地址
+                    if (string.IsNullOrEmpty(json))
+                    {
+                        System.Diagnostics.Debug.WriteLine("图床服务器未响应！请稍后再次尝试上传！");
+                        mdImageUriArray.Add("");
+                        continue;
+                    }
+                    JsonObject jsonObject = JsonObject.Parse(json);
+                    int postCode = (int)jsonObject.GetNamedNumber("code");
+                    // 代码为200则成功
+                    if (postCode == 200)
+                    {
+                        string imageUri = "";
+                        try
                         {
-                            json = await response.Content.ReadAsStringAsync();
+                            imageUri = jsonObject.GetNamedObject("data").GetNamedObject("url").GetNamedString(PostType);
                         }
-
-                        // 读取json文件并得到网络地址
-                        if (string.IsNullOrEmpty(json))
+                        catch
                         {
-                            System.Diagnostics.Debug.WriteLine("图床服务器未响应！请稍后再次尝试上传！");
+                            System.Diagnostics.Debug.WriteLine("位于" + processedImageFile.Path
+                                + "的文件上传成功！但无法获取uri，请稍后再次尝试上传！");
                             mdImageUriArray.Add("");
                             continue;
                         }
-                        JsonObject jsonObject = JsonObject.Parse(json);
-                        int postCode = (int)jsonObject.GetNamedNumber("code");
-                        // 代码为200则成功
-                        if (postCode == 200)
-                        {
-                            string imageUri = "";
-                            try
-                            {
-                                imageUri = jsonObject.GetNamedObject("data").GetNamedObject("url").GetNamedString(PostType);
-                            }
-                            catch
-                            {
-                                System.Diagnostics.Debug.WriteLine("位于" + storageFile.Path + "的文件上传成功！但无法获取uri，请稍后再次尝试上传！");
-                                mdImageUriArray.Add("");
-                                continue;
-                            }
-                            mdImageUriArray.Add(imageUri);
-                        }
-                        // 代码不为200则失败
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine("位于" + storageFile.Path + "的文件上传失败！请稍后再次尝试上传！");
-                            mdImageUriArray.Add("");
-                            continue;
-                        }
+                        await imageFile.RenameAsync(hashcode + "#" + i + imageFile.FileType, NameCollisionOption.ReplaceExisting);
+                        mdImageUriArray.Add(imageUri);
+                    }
+                    // 代码不为200则失败
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("位于" + processedImageFile.Path
+                            + "的文件上传失败！请稍后再次尝试上传！");
+                        mdImageUriArray.Add("");
+                        continue;
                     }
                 }
-                foreach (string tmp in mdImageUriArray)
+
+                // 将md文件的图片引用进行替换
+                // TODO:可能还有BUG
+                string processedMdText = Regex.Replace(mdText, mdImageRegex, m =>
+                  {
+                      if (mdImageUriArray[i - 1].ToString() == "")
+                      {
+                          return m.Value;
+                      }
+                      else
+                      {
+                          if (mdImageTitleArray[i - 1].ToString() == "")
+                          {
+                              return "![" + mdImageNoteArray[i - 1] + "](" + mdImageUriArray[i - 1] + ")";
+                          }
+                          else
+                          {
+                              return "![" + mdImageNoteArray[i - 1] + "](" + mdImageUriArray[i - 1] + " \"" + mdImageTitleArray[i - 1] + "\")";
+                          }
+                      }
+                  });
+                try
                 {
-                    System.Diagnostics.Debug.WriteLine(tmp);
+                    await FileIO.WriteTextAsync(TheOpenedFile.LinkedMdFile, processedMdText);
                 }
+                catch
+                {
+                    System.Diagnostics.Debug.WriteLine("覆盖写入\""
+                        + TheOpenedFile.LinkedMdFile.Path + "\"文件失败！请检查后重新上传图片。");
+                }
+
+                // 将所有存储html的图片引用进行替换
+                // 替换链接的html文件
+                if (TheOpenedFile.LinkedHtmlFile != null)
+                {
+                    string replacedHtml = htmlImageReplace(await FileIO.ReadTextAsync(TheOpenedFile.LinkedHtmlFile), mdImageUriArray);
+                    try
+                    {
+                        await FileIO.WriteTextAsync(TheOpenedFile.LinkedHtmlFile, replacedHtml);
+                    }
+                    catch
+                    {
+                        System.Diagnostics.Debug.WriteLine("覆盖写入\""
+                            + TheOpenedFile.LinkedHtmlFile.Path + "\"文件失败！请检查后重新上传图片。");
+                    }
+                }
+                // 替换打开文件的Html字段
+                if (TheOpenedFile.Html != null)
+                {
+                    TheOpenedFile.Html = htmlImageReplace(TheOpenedFile.Html, mdImageUriArray);
+                }
+                // 替换打开文件的ToutiaoHtml字段
+                if (TheOpenedFile.ToutiaoHtml != null)
+                {
+                    htmlImageReplace(TheOpenedFile.ToutiaoHtml, mdImageUriArray);
+                }
+
+                // 提示上传图片完成
+                System.Diagnostics.Debug.WriteLine("上传图片完成！");
             }
         }
 
@@ -295,6 +375,40 @@ namespace FullPlatformPublisher
                 DataPackage ToutiaoHtmlDataPackage = new DataPackage();
                 ToutiaoHtmlDataPackage.SetText(TheOpenedFile.ToutiaoHtml);
                 Clipboard.SetContent(ToutiaoHtmlDataPackage);
+            }
+        }
+
+        // html图片替换引用网址函数
+        private static string htmlImageReplace(string html, ArrayList replacement)
+        {
+            HtmlDocument doc = new HtmlDocument();
+            doc.LoadHtml(html);
+            var imageNodes = doc.DocumentNode
+                .SelectNodes("//img[@src]");
+            if (imageNodes == null)
+            {
+                return html;
+            }
+            else
+            {
+                int i = 0;
+                foreach (HtmlNode node in imageNodes)
+                {
+
+                    if ((i + 1) > replacement.Count)
+                    {
+                        break;
+                    }
+                    if (replacement[i].ToString() == "")
+                    {
+                        i++;
+                        continue;
+                    }
+                    node.SetAttributeValue("src", replacement[i++].ToString());
+                }
+                StringWriter writer = new StringWriter();
+                doc.Save(writer);
+                return writer.ToString();
             }
         }
 
