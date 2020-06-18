@@ -27,7 +27,7 @@ using Windows.Web.Http;
 // TODO：
 // 打开按钮去掉，同步按钮变成图片替换上传按钮，增加一个生成特异html的按钮
 // 头条那几个选择框变为下拉菜单
-// 关于图片重新排序等等
+// 可以开始做多平台兼容了
 namespace FullPlatformPublisher
 {
     public sealed partial class MainPage : Page
@@ -55,6 +55,9 @@ namespace FullPlatformPublisher
 
         // 存储处理后图片的文件夹名称
         public static string ProcessedImages = "images_processed";
+
+        // 存储额外素材图片的文件夹名称
+        public static string RawImages = "images_raw";
 
         // 支持图像类型
         public static string[] SupportImageTypes =
@@ -92,6 +95,18 @@ namespace FullPlatformPublisher
                 // 获取当前文件夹
                 StorageFolder currentFolder = await TheOpenedFile.LinkedMdFile.GetParentAsync();
 
+                // 获取原始图片文件夹
+                StorageFolder originalImagesFolder = await currentFolder
+                    .CreateFolderAsync(OriginalImages, CreationCollisionOption.OpenIfExists);
+
+                // 获取处理后图片文件夹
+                StorageFolder processedImagesFolder = await currentFolder
+                    .CreateFolderAsync(ProcessedImages, CreationCollisionOption.OpenIfExists);
+
+                // 获取额外素材图片文件夹
+                StorageFolder rawImagesFolder = await currentFolder
+                    .CreateFolderAsync(RawImages, CreationCollisionOption.OpenIfExists);
+
                 // markdown图片语句的正则匹配
                 string mdImageRegex = "!\\[[^\\]]*\\]\\([^\\)]+\\)";
 
@@ -99,6 +114,7 @@ namespace FullPlatformPublisher
                 string hashcode = DateTime.Now.ToString("yyyyMMddHHmmss").GetHashCode().ToString();
 
                 // 获取md文件所有本地图片名称
+                // TODO:现阶段只识别使用斜杠“/”来分割的图片，之后可以更新getUriFrom函数来识别反斜杠甚至多斜杠“//\\/\”的分割
                 string mdText = await FileIO.ReadTextAsync(TheOpenedFile.LinkedMdFile);
                 ArrayList mdImagePathArray = new ArrayList();
                 ArrayList mdImageTitleArray = new ArrayList();
@@ -108,13 +124,13 @@ namespace FullPlatformPublisher
                 {
                     i++;
                     // 获取图片评论数组
-                    string mdImageNote = match.Value.Substring(match.Value.IndexOf("[") + 1
-                        , match.Value.IndexOf("]") - match.Value.IndexOf("[") - 1);
+                    string mdImageNote = match.Value.Substring(match.Value.IndexOf('[') + 1
+                        , match.Value.IndexOf(']') - match.Value.IndexOf('[') - 1);
                     mdImageNoteArray.Add(mdImageNote);
 
                     // 获取图片地址数组和图片标题数组
-                    string mdImagePath = match.Value.Substring(match.Value.LastIndexOf("(") + 1
-                        , match.Value.LastIndexOf(")") - match.Value.LastIndexOf("(") - 1);
+                    string mdImagePath = match.Value.Substring(match.Value.LastIndexOf('(') + 1
+                        , match.Value.LastIndexOf(')') - match.Value.LastIndexOf('(') - 1);
                     string mdImageTitle = "";
                     // 查看是否有图片标题
                     if (mdImagePath.IndexOf('"') == -1)
@@ -135,8 +151,7 @@ namespace FullPlatformPublisher
                     // 如果是网络图片地址
                     else
                     {
-                        StorageFile uriImage = await downloadImageUri(new Uri(mdImagePath), await currentFolder
-                            .CreateFolderAsync(OriginalImages, CreationCollisionOption.OpenIfExists));
+                        StorageFile uriImage = await downloadImageUri(new Uri(mdImagePath), originalImagesFolder);
                         // 下载失败
                         if (uriImage == null)
                         {
@@ -149,8 +164,7 @@ namespace FullPlatformPublisher
                             if (mdImagePath.StartsWith(PostPrefix))
                             {
                                 await uriImage.RenameAsync(hashcode + "#" + i + uriImage.FileType, NameCollisionOption.ReplaceExisting);
-                                await uriImage.CopyAsync(await currentFolder.CreateFolderAsync(ProcessedImages, CreationCollisionOption.OpenIfExists)
-                                    , uriImage.Name, NameCollisionOption.ReplaceExisting);
+                                await uriImage.CopyAsync(processedImagesFolder, uriImage.Name, NameCollisionOption.ReplaceExisting);
                                 mdImagePathArray.Add(mdImagePath);
                             }
                             // 如果是纯网络图片
@@ -205,97 +219,141 @@ namespace FullPlatformPublisher
                         continue;
                     }
 
-                    // 读取素材图像
-                    CanvasBitmap basicImage = await CanvasBitmap
-                        .LoadAsync(canvasDevice, await imageFile.OpenAsync(FileAccessMode.Read));
-
-                    // 自动生成图片基础参数
-                    double basicWidth = basicImage.Size.Width;
-                    double basicHeight = basicImage.Size.Height;
-                    double logoLength;
-                    double imageBound;
-                    // 长度大于四倍高度判定为横条，此时logo长度以基础长度为比例，间隙大小以基础高度为比例
-                    if (basicWidth > (4 * basicHeight))
+                    // 判断文件在本地的位置来决定是否进行图像处理
+                    // 如果是在原始图片文件夹中
+                    bool toProcess;
+                    StorageFile processedImageFile = null;
+                    if (mdImagePath.StartsWith(OriginalImages + "/"))
                     {
-                        logoLength = 0.25 * basicWidth;
-                        imageBound = 0.01 * basicHeight;
+                        toProcess = true;
                     }
-                    // 长度小于一半高度判定为竖条，此时logo长度以基础长度为比例，间隙大小以基础长度为比例
-                    else if (basicWidth < (0.5 * basicHeight))
+                    // 如果是在素材文件夹中的原始图片文件夹中
+                    else if (mdImagePath.StartsWith(RawImages + "/" + OriginalImages + "/"))
                     {
-                        logoLength = 0.5 * basicWidth;
-                        imageBound = 0.01 * basicWidth;
+                        imageFile = await imageFile.CopyAsync(originalImagesFolder, await obtainImageNameAsync(originalImagesFolder)
+                            + imageFile.FileType, NameCollisionOption.GenerateUniqueName);
+                        toProcess = true;
                     }
-                    // 正常图片的参数以基础图片的高度为比例
+                    // 如果是在已处理图片文件夹中
+                    else if (mdImagePath.StartsWith(ProcessedImages + "/") && setImageRealExtension(imageFile).Equals(".gif"))
+                    {
+                        await imageFile.RenameAsync(hashcode + "#" + i + ".gif", NameCollisionOption.ReplaceExisting);
+                        processedImageFile = imageFile;
+                        imageFile = await imageFile.CopyAsync(originalImagesFolder, await obtainImageNameAsync(originalImagesFolder)
+                            + imageFile.FileType, NameCollisionOption.GenerateUniqueName);
+                        toProcess = false;
+                    }
+                    // 如果是在素材文件夹中的已处理图片文件夹中
+                    else if (mdImagePath.StartsWith(RawImages + "/" + ProcessedImages + "/") && setImageRealExtension(imageFile).Equals(".gif"))
+                    {
+                        imageFile = await imageFile.CopyAsync(originalImagesFolder, await obtainImageNameAsync(originalImagesFolder)
+                            + imageFile.FileType, NameCollisionOption.GenerateUniqueName);
+                        processedImageFile = await imageFile.CopyAsync(processedImagesFolder, hashcode + "#" + i + ".gif", NameCollisionOption.ReplaceExisting);
+                        toProcess = false;
+                    }
+                    // 如果是其他位置的图片
                     else
                     {
-                        logoLength = 0.25 * basicHeight;
-                        imageBound = 0.01 * basicHeight;
+                        imageFile = await imageFile.CopyAsync(originalImagesFolder, await obtainImageNameAsync(originalImagesFolder)
+                            + imageFile.FileType, NameCollisionOption.GenerateUniqueName);
+                        toProcess = true;
                     }
-                    double textLength = basicWidth - logoLength - imageBound;
 
-                    // 自动生成字体格式
-                    string note = mdImageNoteArray[i - 1] as string;
-                    if (note.Equals(""))
+                    // 如果处理标志toProcess为真
+                    if (toProcess)
                     {
-                        // 如果没有注释，则使用默认注释格式
-                        note = "如果您觉得文章不错，就点个赞吧！";
-                    }
-                    // 默认字体大小为短边的一半，如果超过上限，则每次字号减小1%再检验
-                    float fontSize = (float)((logoLength < textLength) ? (logoLength) : (textLength));
-                    while (Math.Floor(logoLength / fontSize) * Math.Floor(textLength / fontSize) < note.Length)
-                    {
-                        fontSize *= 0.99f;
-                    }
-                    // 最终字号变为磅数，加入自定义字体和换行规则
-                    // TODO：文字变得居中且更严格的自适应大小改变
-                    CanvasTextFormat textFormat = new CanvasTextFormat()
-                    {
-                        FontFamily = "ms-appx:///Assets/fonts/qingsong.ttf#清松手寫體1",
-                        WordWrapping = CanvasWordWrapping.WholeWord,
-                        FontSize = fontSize * (72.0f / basicImage.Dpi)
-                    };
+                        // 读取素材图像
+                        CanvasBitmap basicImage = await CanvasBitmap
+                            .LoadAsync(canvasDevice, await imageFile.OpenAsync(FileAccessMode.Read));
 
-                    // 进行拼合
-                    StorageFile processedImageFile = await (await currentFolder.CreateFolderAsync(ProcessedImages
-                        , CreationCollisionOption.OpenIfExists)).CreateFileAsync(hashcode + "#" + i + ".gif", CreationCollisionOption.ReplaceExisting);
-                    // 拼合图像处理
-                    using (CanvasRenderTarget canvasRenderTarget = new CanvasRenderTarget(basicImage
-                        , new Size(basicWidth + 2 * imageBound, basicHeight + logoLength + 3 * imageBound)))
-                    {
-                        using (CanvasDrawingSession session = canvasRenderTarget.CreateDrawingSession())
+                        // 自动生成图片基础参数
+                        double basicWidth = basicImage.Size.Width;
+                        double basicHeight = basicImage.Size.Height;
+                        double logoLength;
+                        double imageBound;
+                        // 长度大于四倍高度判定为横条，此时logo长度以基础长度为比例，间隙大小以基础高度为比例
+                        if (basicWidth > (4 * basicHeight))
                         {
-                            // 加入白底
-                            session.Clear(Colors.White);
-                            // 渲染基础图像
-                            session.DrawImage(basicImage, (float)imageBound, (float)imageBound);
-                            // 渲染logo图像
-                            session.DrawImage(logoImage, new Rect(imageBound, basicHeight + 2 * imageBound, logoLength, logoLength)
-                                , new Rect(0.0, 0.0, logoImage.Size.Width, logoImage.Size.Height)
-                                , (float)1.0, CanvasImageInterpolation.HighQualityCubic);
-                            // 渲染文本栏目
-                            session.DrawText(note, (float)(logoLength + 2 * imageBound), (float)(basicHeight + 2 * imageBound)
-                                , (float)textLength, (float)logoLength, Colors.Black, textFormat);
-                            // 刷新
-                            session.Flush();
+                            logoLength = 0.25 * basicWidth;
+                            imageBound = 0.01 * basicHeight;
                         }
-                        // 生成处理后的图像文件
-                        await canvasRenderTarget.SaveAsync(await processedImageFile.OpenAsync(FileAccessMode.ReadWrite)
-                            , CanvasBitmapFileFormat.Gif);
+                        // 长度小于一半高度判定为竖条，此时logo长度以基础长度为比例，间隙大小以基础长度为比例
+                        else if (basicWidth < (0.5 * basicHeight))
+                        {
+                            logoLength = 0.5 * basicWidth;
+                            imageBound = 0.01 * basicWidth;
+                        }
+                        // 正常图片的参数以基础图片的高度为比例
+                        else
+                        {
+                            logoLength = 0.25 * basicHeight;
+                            imageBound = 0.01 * basicHeight;
+                        }
+                        double textLength = basicWidth - logoLength - imageBound;
+
+                        // 自动生成字体格式
+                        string note = mdImageNoteArray[i - 1] as string;
+                        if (note.Equals(""))
+                        {
+                            // 如果没有注释，则使用默认注释格式
+                            note = "如果您觉得文章不错，就点个赞吧！";
+                        }
+                        // 默认字体大小为短边的一半，如果超过上限，则每次字号减小1%再检验
+                        float fontSize = (float)((logoLength < textLength) ? (logoLength) : (textLength));
+                        while (Math.Floor(logoLength / fontSize) * Math.Floor(textLength / fontSize) < note.Length)
+                        {
+                            fontSize *= 0.99f;
+                        }
+                        // 最终字号变为磅数，加入自定义字体和换行规则
+                        // TODO：文字变得居中且更严格的自适应大小改变
+                        CanvasTextFormat textFormat = new CanvasTextFormat()
+                        {
+                            FontFamily = "ms-appx:///Assets/fonts/qingsong.ttf#清松手寫體1",
+                            WordWrapping = CanvasWordWrapping.WholeWord,
+                            FontSize = fontSize * (72.0f / basicImage.Dpi)
+                        };
+
+                        // 拼合图像处理
+                        using (CanvasRenderTarget canvasRenderTarget = new CanvasRenderTarget(basicImage
+                            , new Size(basicWidth + 2 * imageBound, basicHeight + logoLength + 3 * imageBound)))
+                        {
+                            using (CanvasDrawingSession session = canvasRenderTarget.CreateDrawingSession())
+                            {
+                                // 加入白底
+                                session.Clear(Colors.White);
+                                // 渲染基础图像
+                                session.DrawImage(basicImage, (float)imageBound, (float)imageBound);
+                                // 渲染logo图像
+                                session.DrawImage(logoImage, new Rect(imageBound, basicHeight + 2 * imageBound, logoLength, logoLength)
+                                    , new Rect(0.0, 0.0, logoImage.Size.Width, logoImage.Size.Height)
+                                    , (float)1.0, CanvasImageInterpolation.HighQualityCubic);
+                                // 渲染文本栏目
+                                session.DrawText(note, (float)(logoLength + 2 * imageBound), (float)(basicHeight + 2 * imageBound)
+                                    , (float)textLength, (float)logoLength, Colors.Black, textFormat);
+                                // 刷新
+                                session.Flush();
+                            }
+                            // 生成处理后的图像文件
+                            processedImageFile = await (processedImagesFolder
+                                .CreateFileAsync(hashcode + "#" + i + ".gif", CreationCollisionOption.ReplaceExisting));
+                            await canvasRenderTarget.SaveAsync(await processedImageFile.OpenAsync(FileAccessMode.ReadWrite)
+                                , CanvasBitmapFileFormat.Gif);
+                        }
                     }
 
                     // 上传图像文件至图床
                     HttpMultipartFormDataContent dataContent = new HttpMultipartFormDataContent();
-                    HttpStreamContent streamContent = new HttpStreamContent(await processedImageFile.OpenAsync(FileAccessMode.Read));
-                    // 生成表单
-                    dataContent.Add(streamContent, "image", DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + ".gif");
-                    dataContent.Add(new HttpStringContent(PostType), "apiType");
-                    dataContent.Add(new HttpStringContent(PostToken), "token");
-                    HttpClient httpClient = new HttpClient();
-                    // 得到回应
                     string json = string.Empty;
-                    using (HttpResponseMessage response = await httpClient.PostAsync(new Uri(PostUrl), dataContent).AsTask())
+                    using (var uploadStream = await processedImageFile.OpenAsync(FileAccessMode.Read))
                     {
+                        HttpStreamContent streamContent = new HttpStreamContent(uploadStream);
+                        // 生成表单
+                        dataContent.Add(streamContent, "image", DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + ".gif");
+                        dataContent.Add(new HttpStringContent(PostType), "apiType");
+                        dataContent.Add(new HttpStringContent(PostToken), "token");
+                        // 得到回应
+                        HttpClient httpClient = new HttpClient();
+                        HttpResponseMessage response = await httpClient.PostAsync(new Uri(PostUrl), dataContent).AsTask();
                         json = await response.Content.ReadAsStringAsync();
                     }
 
@@ -337,24 +395,26 @@ namespace FullPlatformPublisher
                 }
 
                 // 将md文件的图片引用进行替换
+                i = 0;
                 string processedMdText = Regex.Replace(mdText, mdImageRegex, m =>
-                  {
-                      if (mdImageUriArray[i - 1].ToString() == "")
-                      {
-                          return m.Value;
-                      }
-                      else
-                      {
-                          if (mdImageTitleArray[i - 1].ToString() == "")
-                          {
-                              return "![" + mdImageNoteArray[i - 1] + "](" + mdImageUriArray[i - 1] + ")";
-                          }
-                          else
-                          {
-                              return "![" + mdImageNoteArray[i - 1] + "](" + mdImageUriArray[i - 1] + " \"" + mdImageTitleArray[i - 1] + "\")";
-                          }
-                      }
-                  });
+                {
+                    i++;
+                    if (mdImageUriArray[i - 1].ToString() == "")
+                    {
+                        return m.Value;
+                    }
+                    else
+                    {
+                        if (mdImageTitleArray[i - 1].ToString() == "")
+                        {
+                            return "![" + mdImageNoteArray[i - 1] + "](" + mdImageUriArray[i - 1] + ")";
+                        }
+                        else
+                        {
+                            return "![" + mdImageNoteArray[i - 1] + "](" + mdImageUriArray[i - 1] + " \"" + mdImageTitleArray[i - 1] + "\")";
+                        }
+                    }
+                });
                 try
                 {
                     await FileIO.WriteTextAsync(TheOpenedFile.LinkedMdFile, processedMdText);
@@ -391,10 +451,99 @@ namespace FullPlatformPublisher
                     htmlImageReplace(TheOpenedFile.ToutiaoHtml, mdImageUriArray);
                 }
 
-                // 将所有特殊文件夹内的其他文件移动到指定文件夹
-                // 记得按照日期重命名+本来的名字
-
-                // 将剩余文件进行重新排序和重命名
+                // 将所有多余图片转移到素材文件夹中，引用图片进行重命名
+                // 将原始图片文件夹中的多余图片转移到素材文件夹中，原始图片进行重命名
+                var originalImagesFolderFiles = await originalImagesFolder.GetFilesAsync();
+                foreach (StorageFile originalImagesFolderFile in originalImagesFolderFiles)
+                {
+                    if (!originalImagesFolderFile.Name.StartsWith(hashcode + "#"))
+                    {
+                        StorageFolder rawFolderOriginalImages = await rawImagesFolder
+                            .CreateFolderAsync(OriginalImages, CreationCollisionOption.OpenIfExists);
+                        try
+                        {
+                            await originalImagesFolderFile.MoveAsync(rawFolderOriginalImages, DateTime.Now.ToString("yyyy-MM-dd HH：mm：ss#")
+                                + originalImagesFolderFile.Name, NameCollisionOption.GenerateUniqueName);
+                        }
+                        catch
+                        {
+                            try
+                            {
+                                await originalImagesFolderFile.RenameAsync("PleaseMoveIt#"
+                                    + DateTime.Now.ToString("yyyy-MM-dd HH：mm：ss#")
+                                    + originalImagesFolderFile.Name, NameCollisionOption.GenerateUniqueName);
+                            }
+                            catch
+                            {
+                            }
+                            finally
+                            {
+                                System.Diagnostics.Debug.WriteLine("移动文件\""
+                                    + originalImagesFolderFile.Path + "\"失败！请检查后手动移动该文件至\""
+                                    + rawFolderOriginalImages.Path + "\"文件夹中。");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            await originalImagesFolderFile.RenameAsync(originalImagesFolderFile.Name
+                                .Substring(originalImagesFolderFile.Name.IndexOf('#') + 1), NameCollisionOption.ReplaceExisting);
+                        }
+                        catch
+                        {
+                            System.Diagnostics.Debug.WriteLine("重命名文件\""
+                                + originalImagesFolderFile.Path + "\"失败！请检查后手动进行重命名");
+                        }
+                    }
+                }
+                // 将处理后图片文件夹中的多余图片转移到素材文件夹中，处理后图片进行重命名
+                var processedImagesFolderFiles = await processedImagesFolder.GetFilesAsync();
+                foreach (StorageFile processedImagesFolderFile in processedImagesFolderFiles)
+                {
+                    if (!processedImagesFolderFile.Name.StartsWith(hashcode + "#"))
+                    {
+                        StorageFolder rawFolderProcessedImages = await rawImagesFolder
+                            .CreateFolderAsync(ProcessedImages, CreationCollisionOption.OpenIfExists);
+                        try
+                        {
+                            await processedImagesFolderFile.MoveAsync(rawFolderProcessedImages, DateTime.Now.ToString("yyyy-MM-dd HH：mm：ss#")
+                                + processedImagesFolderFile.Name, NameCollisionOption.GenerateUniqueName);
+                        }
+                        catch
+                        {
+                            try
+                            {
+                                await processedImagesFolderFile.RenameAsync("PleaseMoveIt#"
+                                    + DateTime.Now.ToString("yyyy-MM-dd HH：mm：ss#")
+                                    + processedImagesFolderFile.Name, NameCollisionOption.GenerateUniqueName);
+                            }
+                            catch
+                            {
+                            }
+                            finally
+                            {
+                                System.Diagnostics.Debug.WriteLine("移动文件\""
+                                    + processedImagesFolderFile.Path + "\"失败！请检查后手动移动该文件至\""
+                                    + rawFolderProcessedImages.Path + "\"文件夹中。");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            await processedImagesFolderFile.RenameAsync(processedImagesFolderFile.Name
+                                .Substring(processedImagesFolderFile.Name.IndexOf('#') + 1), NameCollisionOption.ReplaceExisting);
+                        }
+                        catch
+                        {
+                            System.Diagnostics.Debug.WriteLine("重命名文件\""
+                                + processedImagesFolderFile.Path + "\"失败！请检查后手动进行重命名");
+                        }
+                    }
+                }
 
                 // 提示上传图片完成
                 System.Diagnostics.Debug.WriteLine("上传图片完成！");
@@ -1039,7 +1188,7 @@ namespace FullPlatformPublisher
         // 初始化网格视图
         private async void grid_files_LoadedAsync(object sender, RoutedEventArgs e)
         {
-            StorageFolder root = ApplicationData.Current.RoamingFolder;
+            StorageFolder root = ApplicationData.Current.LocalFolder;
             StorageFolder papersFolder = await
                 root.CreateFolderAsync(Root, CreationCollisionOption.OpenIfExists);
             addGridElementAsync(Root);
@@ -1131,7 +1280,7 @@ namespace FullPlatformPublisher
                                 try
                                 {
                                     linkedHtmlFile = await (await file.GetParentAsync())
-                                        .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf(".")) + ".html");
+                                        .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf('.')) + ".html");
                                 }
                                 catch (FileNotFoundException fnfe)
                                 {
@@ -1146,7 +1295,7 @@ namespace FullPlatformPublisher
                                 try
                                 {
                                     linkedMdFile = await (await file.GetParentAsync())
-                                        .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf(".")) + ".md");
+                                        .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf('.')) + ".md");
                                 }
                                 catch (FileNotFoundException fnfe)
                                 {
@@ -1232,11 +1381,11 @@ namespace FullPlatformPublisher
             }
         }
 
-        // 按URL获取当前路径文件夹，起始文件夹为起始远程文件夹
+        // 按URL获取当前路径文件夹，起始文件夹为本地文件夹LocalFolder
         private async Task<StorageFolder> getFolderFromUri(string uri)
         {
             // 获取根目录
-            StorageFolder root = ApplicationData.Current.RoamingFolder;
+            StorageFolder root = ApplicationData.Current.LocalFolder;
             if (uri == null)
             {
                 addGridElementAsync(Root);
@@ -1310,19 +1459,19 @@ namespace FullPlatformPublisher
             }
         }
 
-        // 按URL获取当前路径文件，起始文件夹为起始远程文件夹
+        // 按URL获取当前路径文件，起始文件夹为本地文件夹LocalFolder
         private async Task<StorageFile> getFileFromUri(string uri)
         {
             // 得到上一级文件夹目录
             StorageFolder currentFolder;
             if (uri.Contains("/"))
             {
-                currentFolder = await getFolderFromUri(uri.Substring(0, uri.LastIndexOf("/")));
-                uri = uri.Substring(uri.LastIndexOf("/") + 1);
+                currentFolder = await getFolderFromUri(uri.Substring(0, uri.LastIndexOf('/')));
+                uri = uri.Substring(uri.LastIndexOf('/') + 1);
             }
             else
             {
-                currentFolder = ApplicationData.Current.RoamingFolder;
+                currentFolder = ApplicationData.Current.LocalFolder;
             }
             if (currentFolder == null)
             {
@@ -1354,8 +1503,8 @@ namespace FullPlatformPublisher
             // 得到上一级文件夹目录
             if (uri.Contains("/"))
             {
-                currentFolder = await getFolderFromUri(currentFolder, uri.Substring(0, uri.LastIndexOf("/")));
-                uri = uri.Substring(uri.LastIndexOf("/") + 1);
+                currentFolder = await getFolderFromUri(currentFolder, uri.Substring(0, uri.LastIndexOf('/')));
+                uri = uri.Substring(uri.LastIndexOf('/') + 1);
             }
             if (currentFolder == null)
             {
@@ -1416,7 +1565,7 @@ namespace FullPlatformPublisher
             string path = textBox_path.Text;
             if (path != null)
             {
-                int index = path.LastIndexOf("/");
+                int index = path.LastIndexOf('/');
                 if (index > 0)
                 {
                     addGridElementAsync(path.Remove(index));
