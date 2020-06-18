@@ -41,6 +41,9 @@ namespace FullPlatformPublisher
         // 上传图床类型
         public static string PostType = "toutiao";
 
+        // 上传图床链接前缀
+        public static string PostPrefix = "https://p.pstatp.com/origin/";
+
         // 上传图床token
         public static string PostToken = "15f25c5ce5d90061aafc0fdc74c36ae2";
 
@@ -100,8 +103,10 @@ namespace FullPlatformPublisher
                 ArrayList mdImagePathArray = new ArrayList();
                 ArrayList mdImageTitleArray = new ArrayList();
                 ArrayList mdImageNoteArray = new ArrayList();
+                int i = 0;
                 foreach (Match match in Regex.Matches(mdText, mdImageRegex))
                 {
+                    i++;
                     // 获取图片评论数组
                     string mdImageNote = match.Value.Substring(match.Value.IndexOf("[") + 1
                         , match.Value.IndexOf("]") - match.Value.IndexOf("[") - 1);
@@ -111,6 +116,7 @@ namespace FullPlatformPublisher
                     string mdImagePath = match.Value.Substring(match.Value.LastIndexOf("(") + 1
                         , match.Value.LastIndexOf(")") - match.Value.LastIndexOf("(") - 1);
                     string mdImageTitle = "";
+                    // 查看是否有图片标题
                     if (mdImagePath.IndexOf('"') == -1)
                     {
                         mdImagePath = mdImagePath.Trim();
@@ -121,13 +127,38 @@ namespace FullPlatformPublisher
                             , mdImagePath.LastIndexOf('"') - mdImagePath.IndexOf('"') - 1);
                         mdImagePath = mdImagePath.Substring(0, mdImagePath.IndexOf('"')).Trim();
                     }
+                    // 如果是本地图片地址
                     if (!(mdImagePath.StartsWith("http://") || mdImagePath.StartsWith("https://")))
                     {
                         mdImagePathArray.Add(mdImagePath);
                     }
+                    // 如果是网络图片地址
                     else
                     {
-                        mdImagePathArray.Add(null);
+                        StorageFile uriImage = await downloadImageUri(new Uri(mdImagePath), await currentFolder
+                            .CreateFolderAsync(OriginalImages, CreationCollisionOption.OpenIfExists));
+                        // 下载失败
+                        if (uriImage == null)
+                        {
+                            mdImagePathArray.Add(null);
+                        }
+                        // 下载成功
+                        else
+                        {
+                            // 如果是已上传图片
+                            if (mdImagePath.StartsWith(PostPrefix))
+                            {
+                                await uriImage.RenameAsync(hashcode + "#" + i + uriImage.FileType, NameCollisionOption.ReplaceExisting);
+                                await uriImage.CopyAsync(await currentFolder.CreateFolderAsync(ProcessedImages, CreationCollisionOption.OpenIfExists)
+                                    , uriImage.Name, NameCollisionOption.ReplaceExisting);
+                                mdImagePathArray.Add(mdImagePath);
+                            }
+                            // 如果是纯网络图片
+                            else
+                            {
+                                mdImagePathArray.Add(OriginalImages + "/" + uriImage.Name);
+                            }
+                        }
                     }
                     mdImageTitleArray.Add(mdImageTitle);
                 }
@@ -144,15 +175,23 @@ namespace FullPlatformPublisher
                     , await logoFile.OpenAsync(FileAccessMode.Read));
 
                 // 本地图像处理
-                int i = 0;
+                i = 0;
                 ArrayList mdImageUriArray = new ArrayList();
                 foreach (string mdImagePath in mdImagePathArray)
                 {
                     i++;
-                    // 如果图片已经为网络图片
+                    // 如果图片为网络图片且下载失败
                     if (mdImagePath == null)
                     {
-                        System.Diagnostics.Debug.WriteLine("图片不为本地图片，已经自动跳过。");
+                        System.Diagnostics.Debug.WriteLine("图片不为本地图片且下载到本地失败，已经自动跳过。");
+                        mdImageUriArray.Add("");
+                        continue;
+                    }
+
+                    // 如果图片为已上传图片
+                    if (mdImagePath.StartsWith(PostPrefix))
+                    {
+                        System.Diagnostics.Debug.WriteLine("图片先前已上传图床，所以自动跳过。");
                         mdImageUriArray.Add("");
                         continue;
                     }
@@ -298,7 +337,6 @@ namespace FullPlatformPublisher
                 }
 
                 // 将md文件的图片引用进行替换
-                // TODO:可能还有BUG
                 string processedMdText = Regex.Replace(mdText, mdImageRegex, m =>
                   {
                       if (mdImageUriArray[i - 1].ToString() == "")
@@ -352,6 +390,11 @@ namespace FullPlatformPublisher
                 {
                     htmlImageReplace(TheOpenedFile.ToutiaoHtml, mdImageUriArray);
                 }
+
+                // 将所有特殊文件夹内的其他文件移动到指定文件夹
+                // 记得按照日期重命名+本来的名字
+
+                // 将剩余文件进行重新排序和重命名
 
                 // 提示上传图片完成
                 System.Diagnostics.Debug.WriteLine("上传图片完成！");
