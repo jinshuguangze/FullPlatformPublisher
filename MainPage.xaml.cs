@@ -47,6 +47,9 @@ namespace FullPlatformPublisher
         // 上传图床token
         public static string PostToken = "15f25c5ce5d90061aafc0fdc74c36ae2";
 
+        // 外部分割线图像网址
+        public static string DividingLine = "https://p.pstatp.com/origin/ffb10000cc201cc2e2e4";
+
         // 存储数据的根文件夹名称
         public static string Root = "Papers";
 
@@ -259,6 +262,9 @@ namespace FullPlatformPublisher
                         toProcess = true;
                     }
 
+                    // 将原图片修改成不重复名称
+                    await imageFile.RenameAsync(hashcode + "#" + i + imageFile.FileType, NameCollisionOption.ReplaceExisting);
+
                     // 如果处理标志toProcess为真
                     if (toProcess)
                     {
@@ -381,7 +387,6 @@ namespace FullPlatformPublisher
                             mdImageUriArray.Add("");
                             continue;
                         }
-                        await imageFile.RenameAsync(hashcode + "#" + i + imageFile.FileType, NameCollisionOption.ReplaceExisting);
                         mdImageUriArray.Add(imageUri);
                     }
                     // 代码不为200则失败
@@ -1172,7 +1177,13 @@ namespace FullPlatformPublisher
             // 视频处理：暂不做处理
             // TODO：做有可能的支持
 
+            // 搜索卡片处理：暂不做处理
+            // TODO：做有可能的支持
+
             // 商品推广处理：暂不做处理
+            // TODO：做有可能的支持
+
+            // 专栏推广处理：暂不做处理
             // TODO：做有可能的支持
 
             // 投票处理：暂不做处理
@@ -1208,8 +1219,7 @@ namespace FullPlatformPublisher
 
             // 字体更改：不发生改变
 
-            // 分割线和多余字符处理：如果分割线在文章首尾，直接去掉，直到首尾没有分割线为止
-            // 如果在文章中，则替换成分割线图片
+            // 分割线和多余字符处理：如果分割线在文章首尾，直接去掉，直到首尾没有分割线为止，如果在文章中，则替换成分割线图片
             // 如果首尾是多余字符，也直接去掉，直到首尾没有多余字符为止
             do
             {
@@ -1242,10 +1252,20 @@ namespace FullPlatformPublisher
 
             var dividingNodes = doc.DocumentNode
                 .SelectNodes("//hr");
-            // 替换成分割线gif图片
+            if (dividingNodes != null)
+            {
+                foreach (HtmlNode node in dividingNodes)
+                {
+                    node.Name = "p";
+                    node.ChildNodes.Add(HtmlNode.CreateNode("<img src=\"" + DividingLine + "\">"));
+                    node.ChildNodes.Add(HtmlNode.CreateNode("<h4 class=\"img-desc\">请输入图片描述</h4>"));
+                }
+            }
 
+            StringWriter writer = new StringWriter();
+            doc.Save(writer);
 
-            return null;
+            return (writer.ToString());
         }
 
         // 初始化网格视图
