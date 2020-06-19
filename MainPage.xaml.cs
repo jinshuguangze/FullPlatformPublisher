@@ -638,7 +638,7 @@ namespace FullPlatformPublisher
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(toutiaoHtml);
 
-            // 头条标题处理：h2和h1标签固定为h1，其余固定为h2
+            // 标题处理：h2和h1标签固定为h1，其余固定为h2
             // TODO：H1标签和H2标签提取时，有三种形式
             var headerNodes = doc.DocumentNode
                 .SelectNodes("//h1 | //h2 | //h3 | //h4 | //h5 | //h6");
@@ -1183,6 +1183,69 @@ namespace FullPlatformPublisher
 
             // 在线网页处理：暂不做处理
             // TODO：在线给已外链添加<u></u>
+        }
+
+        // 小黑盒html处理
+        private static string heyboxHtmlProcessing(string hexboxHtml)
+        {
+            HtmlDocument doc = new HtmlDocument();
+            doc.LoadHtml(hexboxHtml);
+
+            // 标题处理：属性全部去除，非h2标签变为h2标签
+            var headerNodes = doc.DocumentNode
+                .SelectNodes("//h1 | //h2 | //h3 | //h4 | //h5 | //h6");
+            if (headerNodes != null)
+            {
+                foreach (HtmlNode node in headerNodes)
+                {
+                    if (!node.Name.Equals("h2"))
+                    {
+                        node.Name = "h2";
+                    }
+                    node.Attributes.RemoveAll();
+                }
+            }
+
+            // 字体更改：不发生改变
+
+            // 分割线和多余字符处理：如果分割线在文章首尾，直接去掉，直到首尾没有分割线为止
+            // 如果在文章中，则替换成分割线图片
+            // 如果首尾是多余字符，也直接去掉，直到首尾没有多余字符为止
+            do
+            {
+                HtmlNode parentNode = doc.DocumentNode
+                .SelectSingleNode("//div");
+                if (parentNode != null
+                    && !parentNode.HasAttributes)
+                {
+                    if (parentNode.FirstChild.Name.Equals("hr")
+                            || parentNode.FirstChild.Name.Equals("br"))
+                    {
+                        parentNode.FirstChild.Remove();
+                        continue;
+                    }
+
+                    if (parentNode.LastChild.Name.Equals("hr")
+                            || parentNode.LastChild.Name.Equals("br"))
+                    {
+                        parentNode.LastChild.Remove();
+                        continue;
+                    }
+                    parentNode.InnerHtml = parentNode.InnerHtml.Trim('\r', '\n', '\t', ' ');
+                    break;
+                }
+                else
+                {
+                    break;
+                }
+            } while (true);
+
+            var dividingNodes = doc.DocumentNode
+                .SelectNodes("//hr");
+            // 替换成分割线gif图片
+
+
+            return null;
         }
 
         // 初始化网格视图
