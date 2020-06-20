@@ -568,9 +568,12 @@ namespace FullPlatformPublisher
                 // 处理头条html
                 TheOpenedFile.ToutiaoHtml = toutiaoHtmlProcessing(TheOpenedFile.Html);
 
+                // 处理小黑盒html
+                TheOpenedFile.HexboxHtml = heyboxHtmlProcessing(TheOpenedFile.Html);
+
                 // 设置粘贴板内容
                 DataPackage ToutiaoHtmlDataPackage = new DataPackage();
-                ToutiaoHtmlDataPackage.SetText(TheOpenedFile.ToutiaoHtml);
+                ToutiaoHtmlDataPackage.SetText(TheOpenedFile.HexboxHtml);
                 Clipboard.SetContent(ToutiaoHtmlDataPackage);
             }
         }
@@ -698,6 +701,8 @@ namespace FullPlatformPublisher
                 if (parentNode != null
                     && !parentNode.HasAttributes)
                 {
+                    parentNode.InnerHtml = parentNode.InnerHtml.Trim('\r', '\n', '\t', ' ');
+
                     if (parentNode.FirstChild.Name.Equals("hr")
                             || parentNode.FirstChild.Name.Equals("br"))
                     {
@@ -711,7 +716,6 @@ namespace FullPlatformPublisher
                         parentNode.LastChild.Remove();
                         continue;
                     }
-                    parentNode.InnerHtml = parentNode.InnerHtml.Trim('\r', '\n', '\t', ' ');
                     break;
                 }
                 else
@@ -1219,7 +1223,8 @@ namespace FullPlatformPublisher
 
             // 字体更改：不发生改变
 
-            // 分割线和多余字符处理：如果分割线在文章首尾，直接去掉，直到首尾没有分割线为止，如果在文章中，则替换成分割线图片
+            // 分割线和多余字符处理：如果分割线在文章首尾，直接去掉，直到首尾没有分割线为止
+            // 如果在文章中，且不带任何属性，则替换成分割线图片
             // 如果首尾是多余字符，也直接去掉，直到首尾没有多余字符为止
             do
             {
@@ -1228,6 +1233,8 @@ namespace FullPlatformPublisher
                 if (parentNode != null
                     && !parentNode.HasAttributes)
                 {
+                    parentNode.InnerHtml = parentNode.InnerHtml.Trim('\r', '\n', '\t', ' ');
+
                     if (parentNode.FirstChild.Name.Equals("hr")
                             || parentNode.FirstChild.Name.Equals("br"))
                     {
@@ -1241,7 +1248,6 @@ namespace FullPlatformPublisher
                         parentNode.LastChild.Remove();
                         continue;
                     }
-                    parentNode.InnerHtml = parentNode.InnerHtml.Trim('\r', '\n', '\t', ' ');
                     break;
                 }
                 else
@@ -1256,11 +1262,63 @@ namespace FullPlatformPublisher
             {
                 foreach (HtmlNode node in dividingNodes)
                 {
-                    node.Name = "p";
-                    node.ChildNodes.Add(HtmlNode.CreateNode("<img src=\"" + DividingLine + "\">"));
-                    node.ChildNodes.Add(HtmlNode.CreateNode("<h4 class=\"img-desc\">请输入图片描述</h4>"));
+                    if (!node.HasAttributes)
+                    {
+                        node.Name = "p";
+                        node.RemoveAllChildren();
+                        node.ChildNodes.Add(HtmlNode.CreateNode("<img src=\"" + DividingLine + "\">"));
+                        node.ChildNodes.Add(HtmlNode.CreateNode("<h4 class=\"img-desc\">请输入图片描述</h4>"));
+                    }
                 }
             }
+
+            // 删除线处理：不发生改变
+
+            // 脚注处理：加脚注参考资料加高亮，脚注用个人主页链接，网站用括号括起来，并且下方有下划线，结尾有↩︎
+            var footItemNodes = doc.DocumentNode.
+                SelectNodes("//section[@class='footnotes']/ol[@class='footnotes-list']/li[@class='footnote-item']");
+            ArrayList referenceWebList = new ArrayList();
+            ArrayList referenceWordList = new ArrayList();
+            if (footItemNodes != null)
+            {
+                foreach (HtmlNode footItemNode in footItemNodes)
+                {
+                    if (footItemNode.GetAttributeValue("id", "").StartsWith("fn")
+                        && footItemNode.FirstChild.Name.Equals("p")
+                        && !footItemNode.FirstChild.HasAttributes
+                        && footItemNode.FirstChild.FirstChild.Name.Equals("a")
+                        && !footItemNode.FirstChild.FirstChild.GetAttributeValue("href", "").Equals(""))
+                    {
+                        referenceWebList.Add(footItemNode.FirstChild.FirstChild.GetAttributeValue("href", ""));
+                        referenceWordList.Add(footItemNode.FirstChild.FirstChild.InnerHtml);
+                    }
+                }
+            }
+
+            HtmlNode footNotesNode = doc.DocumentNode.SelectSingleNode("//section[@class='footnotes']");
+            if (footNotesNode != null && referenceWebList != null && referenceWordList != null)
+            {
+                HtmlNode referenceTitleNode = doc.CreateElement("p");
+                HtmlNode referenceTitleStrongNode = doc.CreateElement("strong");
+                referenceTitleStrongNode.AppendChild(HtmlTextNode.CreateNode("参考资料："));
+                referenceTitleNode.AppendChild(referenceTitleStrongNode);
+
+                for (int i = 0; i < referenceWebList.Count; i++)
+                {
+                    HtmlNode referenceContentNode = doc.CreateElement("p");
+                    HtmlNode referenceContentLabelNode = doc.CreateElement("a");
+                    referenceContentLabelNode.PrependChild(HtmlTextNode.CreateNode("[" + (i + 1) + "]"));
+                    referenceContentLabelNode.Attributes
+                        .Add("href", "https://www.xiaoheihe.cn/community/user/9759223");
+                    referenceContentNode.AppendChild(referenceContentLabelNode);
+                    referenceContentNode.InnerHtml = referenceContentNode.InnerHtml
+                            .Insert(referenceContentNode.InnerHtml.Length
+                            , "：<a href=\"" + referenceWebList[i].ToString() + "\"><u>" + referenceWordList[i] + "</u></a>↩︎");
+                    footNotesNode.ParentNode.AppendChild(referenceContentNode);
+                }
+                footNotesNode.ParentNode.ReplaceChild(referenceTitleNode, footNotesNode);
+            }
+
 
             StringWriter writer = new StringWriter();
             doc.Save(writer);
@@ -2062,6 +2120,9 @@ namespace FullPlatformPublisher
 
         // 今日头条文章主体
         public string ToutiaoHtml { get; internal set; }
+
+        // 小黑盒文章主体
+        public string HexboxHtml { get; internal set; }
 
         // md字段
     }
