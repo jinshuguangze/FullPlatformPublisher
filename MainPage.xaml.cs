@@ -970,7 +970,7 @@ namespace FullPlatformPublisher
                 }
             }
 
-            //区块嵌套处理1：用引号代替
+            // 区块嵌套处理1：用引号代替
             do
             {
                 HtmlNode blockQuoteRepeatNode = doc.DocumentNode
@@ -1110,7 +1110,6 @@ namespace FullPlatformPublisher
                         node.ParentNode.RemoveChild(node, true);
                         continue;
                     }
-
 
                     // 判断是否是头条内部网址
                     if (node.GetAttributeValue("href", "").Equals("https://www.toutiao.com")
@@ -1274,9 +1273,9 @@ namespace FullPlatformPublisher
 
             // 删除线处理：不发生改变
 
-            // 脚注处理：加脚注参考资料加高亮，脚注用个人主页链接，网站用括号括起来，并且下方有下划线，结尾有↩︎
+            // 脚注处理：加脚注参考资料变粗，脚注用链接蓝色，网站用括号括起来，并且下方有下划线，结尾有↩︎
             var footItemNodes = doc.DocumentNode.
-                SelectNodes("//section[@class='footnotes']/ol[@class='footnotes-list']/li[@class='footnote-item']");
+            SelectNodes("//section[@class='footnotes']/ol[@class='footnotes-list']/li[@class='footnote-item']");
             ArrayList referenceWebList = new ArrayList();
             ArrayList referenceWordList = new ArrayList();
             if (footItemNodes != null)
@@ -1308,17 +1307,215 @@ namespace FullPlatformPublisher
                     HtmlNode referenceContentNode = doc.CreateElement("p");
                     HtmlNode referenceContentLabelNode = doc.CreateElement("a");
                     referenceContentLabelNode.PrependChild(HtmlTextNode.CreateNode("[" + (i + 1) + "]"));
-                    referenceContentLabelNode.Attributes
-                        .Add("href", "https://www.xiaoheihe.cn/community/user/9759223");
                     referenceContentNode.AppendChild(referenceContentLabelNode);
                     referenceContentNode.InnerHtml = referenceContentNode.InnerHtml
                             .Insert(referenceContentNode.InnerHtml.Length
-                            , "：<a href=\"" + referenceWebList[i].ToString() + "\"><u>" + referenceWordList[i] + "</u></a>↩︎");
+                            , "：" + referenceWordList[i]);
+
+                    string referenceWeb = referenceWebList[i].ToString();
+                    if (!referenceWeb.StartsWith("https://"))
+                    {
+                        if (!referenceWeb.StartsWith("http://"))
+                        {
+                            referenceWeb = referenceWeb.Insert(0, "https://");
+                        }
+                        else if (referenceWeb.StartsWith("http://api.xiaoheihe.cn/v3/bbs/app/api/web/share?link_id="))
+                        {
+                            referenceWeb = referenceWeb.Insert(4, "s");
+                        }
+                    }
+                    
+                    if (referenceWeb.StartsWith("https://api.xiaoheihe.cn/v3/bbs/app/api/web/share?link_id="))
+                    {
+                        referenceContentNode.InnerHtml = referenceContentNode.InnerHtml
+                            .Insert(referenceContentNode.InnerHtml.Length
+                            , "（<a href=" + referenceWeb + " Deal=\"\"><u>" + referenceWeb + "</u></a>↩︎）");
+                    }
+                    else
+                    {
+                        referenceContentNode.InnerHtml = referenceContentNode.InnerHtml
+                            .Insert(referenceContentNode.InnerHtml.Length
+                            , "（<a> <u>" + referenceWeb + "</u></a>↩︎）");
+                    }
                     footNotesNode.ParentNode.AppendChild(referenceContentNode);
                 }
                 footNotesNode.ParentNode.ReplaceChild(referenceTitleNode, footNotesNode);
             }
 
+            // 上标处理：脚注上标将标注变成链接蓝色
+            var superScriptNodes = doc.DocumentNode
+                .SelectNodes("//sup");
+            if (superScriptNodes != null)
+            {
+                foreach (HtmlNode node in superScriptNodes)
+                {
+                    if (node.GetAttributeValue("class", "").Equals("footnote-ref")
+                        && node.FirstChild.Name.Equals("a")
+                        && node.FirstChild.GetAttributeValue("href", "").StartsWith("#fn")
+                        && node.FirstChild.GetAttributeValue("id", "").StartsWith("fnref")
+                        && node.FirstChild.FirstChild.Name.Equals("#text")
+                        && node.FirstChild.FirstChild.InnerHtml.StartsWith("[")
+                        && node.FirstChild.FirstChild.InnerHtml.EndsWith("]")
+                        && !node.FirstChild.FirstChild.HasChildNodes)
+                    {
+                        node.Attributes.RemoveAll();
+                        node.FirstChild.Attributes.RemoveAll();
+                    }
+                }
+            }
+
+            // 下标处理：不发生改变
+
+            // 表情处理：暂不做处理
+            // TODO:做成颜文字
+
+            // 高亮文字处理：转化为空链接
+            var highLightNodes = doc.DocumentNode
+                .SelectNodes("//mark");
+            if (highLightNodes != null)
+            {
+                foreach (HtmlNode node in highLightNodes)
+                {
+                    node.Name = "a";
+                }
+            }
+
+            // 嵌套列表处理：暂不做处理
+
+            // 区块引用处理：暂不做处理
+
+            // 区块嵌套处理：暂不做处理
+
+            // 代码块处理：将单行代码块变成网址蓝色，将多行代码变成引用块
+            var codeBlockNodes = doc.DocumentNode
+                .SelectNodes("//code");
+            if (codeBlockNodes != null)
+            {
+                foreach (HtmlNode node in codeBlockNodes)
+                {
+                    if (node.ParentNode.Name.Equals("pre")
+                        && node.ParentNode.GetAttributeValue("data-role", "").Equals("codeBlock")
+                        && !node.ParentNode.GetAttributeValue("data-info", "").Equals("")
+                        && node.ParentNode.GetAttributeValue("class", "").StartsWith("language-"))
+                    {
+                        node.ParentNode.Name = "p";
+                        node.ParentNode.Attributes.RemoveAll();
+                        node.Name = "blockquote";
+                        node.Attributes.RemoveAll();
+                    }
+                    else
+                    {
+                        node.Name = "a";
+                        node.Attributes.RemoveAll();
+                    }
+                }
+            }
+
+            // 网址处理：如果是直接网址，有括号；如果不是，前面有字，后面括号
+            // 特别地，如果是头条内部网址且是直接网址，既有括号也有链接
+            var webLinkNodes = doc.DocumentNode
+                .SelectNodes("//a[@href]");
+            if (webLinkNodes != null)
+            {
+                foreach (HtmlNode node in webLinkNodes)
+                {
+                    if (!node.GetAttributeValue("Deal", " ").Equals(" "))
+                    {
+                        node.Attributes.Remove("Deal");
+                        continue;
+                    }
+                    string webLink = node.GetAttributeValue("href", "");
+
+                    // 判断是否是站内锚点
+                    if (webLink.StartsWith("#"))
+                    {
+                        node.ParentNode.RemoveChild(node, true);
+                        continue;
+                    }
+
+                    // 判断是否是http协议开头的头条网址
+                    if (!webLink.StartsWith("https://"))
+                    {
+                        if (!webLink.StartsWith("http://"))
+                        {
+                            webLink = webLink.Insert(0, "https://");
+                            node.SetAttributeValue("href", webLink);
+                        }
+                        else if (webLink.StartsWith("http://api.xiaoheihe.cn/v3/bbs/app/api/web/share?link_id="))
+                        {
+                            webLink = webLink.Insert(4, "s");
+                            node.SetAttributeValue("href", webLink);
+                        }
+                    }
+
+                    // 如果链接最后一个节点是图像，则在图像备注上注明网址，未
+                    if (node.LastChild != null
+                        && node.LastChild.Name.Equals("img")
+                        && !node.LastChild.GetAttributeValue("src", "").Equals(""))
+                    {
+                        node.LastChild.SetAttributeValue("alt",
+                            node.LastChild.GetAttributeValue("alt", "") + "（"
+                            + node.GetAttributeValue("href", "") + "↩︎）");
+                        node.ParentNode.RemoveChild(node, true);
+                        continue;
+                    }
+
+                    // 判断是否是头条内部网址
+                    if (node.GetAttributeValue("href", "").StartsWith("https://api.xiaoheihe.cn/v3/bbs/app/api/web/share?link_id="))
+                    {
+                        // 判断是否是直接网址
+                        if (node.InnerText.Equals(node.GetAttributeValue("href", ""))
+                            || ("https://" + node.InnerText).Equals(node.GetAttributeValue("href", ""))
+                            || (node.InnerText.Length >= 58
+                            && node.InnerText.Insert(4, "s").Equals(node.GetAttributeValue("href", ""))))
+                        {
+                            HtmlNode temp = HtmlNode.CreateNode("（<u>" + node.InnerHtml + "</u>↩︎）");
+                            node.RemoveAllChildren();
+                            node.PrependChild(temp);
+                        }
+                    }
+                    else
+                    {
+                        // 判断是否是直接网址
+                        if (!node.InnerText.Equals(node.GetAttributeValue("href", ""))
+                            && !("http://" + node.InnerText).Equals(node.GetAttributeValue("href", ""))
+                            && !("https://" + node.InnerText).Equals(node.GetAttributeValue("href", "")))
+                        {
+                            node.ParentNode.InsertBefore(HtmlNode
+                                .CreateNode("<div>" + node.InnerHtml + "</div>"), node);
+                            node.RemoveAllChildren();
+                            node.InnerHtml = node.GetAttributeValue("href", "");
+                        }
+                        node.Name = "u";
+                        node.Attributes.RemoveAll();
+                        node.ParentNode.InsertBefore(HtmlTextNode.CreateNode("（"), node);
+                        node.ParentNode.InsertAfter(HtmlTextNode.CreateNode("↩︎）"), node);
+                    }
+                }
+            }
+            HtmlNode rootNode = doc.DocumentNode.SelectSingleNode("div");
+            if (rootNode != null && rootNode.ParentNode.Name.Equals("#document"))
+            {
+                rootNode.InnerHtml = rootNode.InnerHtml
+                .Replace("<div>", "").Replace("</div>", "");
+            }
+
+            // 图像处理：换成编辑器自己的图像处理节点
+            var imageNodes = doc.DocumentNode
+                .SelectNodes("//img[@src and @alt]");
+            if (imageNodes != null)
+            {
+                foreach (HtmlNode node in imageNodes)
+                {
+                    string alt = node.GetAttributeValue("alt", "");
+                    node.Attributes.Remove("alt");
+                    HtmlNode temp = HtmlNode.CreateNode("<p>" + node.OuterHtml 
+                        + "<h4 class=\"img-desc\">" + alt + "</h4></p>");
+                    node.ParentNode.ReplaceChild(temp, node);
+                }
+            }
+
+            // steam页面爬取
 
             StringWriter writer = new StringWriter();
             doc.Save(writer);
