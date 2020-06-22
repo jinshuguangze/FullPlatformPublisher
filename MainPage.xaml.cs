@@ -25,9 +25,8 @@ using Windows.UI.Xaml.Media.Imaging;
 using Windows.Web.Http;
 
 // TODO：
-// 打开按钮去掉，同步按钮变成图片替换上传按钮，增加一个生成特异html的按钮
-// 头条那几个选择框变为下拉菜单
-// 可以开始做多平台兼容了
+// 逻辑：建立新文件记录原图和生成图片地址，以上传图片就不用再次下载以及被回收到raw文件夹了
+
 namespace FullPlatformPublisher
 {
     public sealed partial class MainPage : Page
@@ -162,7 +161,7 @@ namespace FullPlatformPublisher
                         }
                         // 下载成功
                         else
-                        {
+                        {   
                             // 如果是已上传图片
                             if (mdImagePath.StartsWith(PostPrefix))
                             {
@@ -173,6 +172,7 @@ namespace FullPlatformPublisher
                             // 如果是纯网络图片
                             else
                             {
+                                await uriImage.RenameAsync(hashcode + "#" + i + "#temp" + uriImage.FileType, NameCollisionOption.ReplaceExisting);
                                 mdImagePathArray.Add(OriginalImages + "/" + uriImage.Name);
                             }
                         }
@@ -359,8 +359,17 @@ namespace FullPlatformPublisher
                         dataContent.Add(new HttpStringContent(PostToken), "token");
                         // 得到回应
                         HttpClient httpClient = new HttpClient();
-                        HttpResponseMessage response = await httpClient.PostAsync(new Uri(PostUrl), dataContent).AsTask();
-                        json = await response.Content.ReadAsStringAsync();
+                        try
+                        {
+                            HttpResponseMessage response = await httpClient.PostAsync(new Uri(PostUrl), dataContent).AsTask();
+                            json = await response.Content.ReadAsStringAsync();
+                        }
+                        catch
+                        {
+                            System.Diagnostics.Debug.WriteLine("位于" + processedImageFile.Path
+                                + "的文件上传失败！请稍后再次尝试上传！");
+                            continue;
+                        }
                     }
 
                     // 读取json文件并得到网络地址
@@ -1329,13 +1338,13 @@ namespace FullPlatformPublisher
                     {
                         referenceContentNode.InnerHtml = referenceContentNode.InnerHtml
                             .Insert(referenceContentNode.InnerHtml.Length
-                            , "（<a href=" + referenceWeb + " Deal=\"\"><u>" + referenceWeb + "</u></a>↩︎）");
+                            , "（<u><a href=" + referenceWeb + " Deal=\"\">" + referenceWeb + "</a></u>↩︎）");
                     }
                     else
                     {
                         referenceContentNode.InnerHtml = referenceContentNode.InnerHtml
                             .Insert(referenceContentNode.InnerHtml.Length
-                            , "（<a> <u>" + referenceWeb + "</u></a>↩︎）");
+                            , "（<u><a>" + referenceWeb + "</a></u>↩︎）");
                     }
                     footNotesNode.ParentNode.AppendChild(referenceContentNode);
                 }
@@ -1377,6 +1386,7 @@ namespace FullPlatformPublisher
                 foreach (HtmlNode node in highLightNodes)
                 {
                     node.Name = "a";
+                    node.Attributes.RemoveAll();
                 }
             }
 
@@ -1429,7 +1439,7 @@ namespace FullPlatformPublisher
                     // 判断是否是站内锚点
                     if (webLink.StartsWith("#"))
                     {
-                        node.ParentNode.RemoveChild(node, true);
+                        node.Attributes.RemoveAll();
                         continue;
                     }
 
@@ -1448,7 +1458,7 @@ namespace FullPlatformPublisher
                         }
                     }
 
-                    // 如果链接最后一个节点是图像，则在图像备注上注明网址，未
+                    // 如果链接最后一个节点是图像，则在图像备注上注明网址
                     if (node.LastChild != null
                         && node.LastChild.Name.Equals("img")
                         && !node.LastChild.GetAttributeValue("src", "").Equals(""))
@@ -1508,10 +1518,12 @@ namespace FullPlatformPublisher
                 foreach (HtmlNode node in imageNodes)
                 {
                     string alt = node.GetAttributeValue("alt", "");
-                    node.Attributes.Remove("alt");
-                    HtmlNode temp = HtmlNode.CreateNode("<p>" + node.OuterHtml 
-                        + "<h4 class=\"img-desc\">" + alt + "</h4></p>");
-                    node.ParentNode.ReplaceChild(temp, node);
+                    HtmlNode h4Node = HtmlNode.CreateNode("<h4 class=\"img-desc\">" + alt + "</h4>");
+                    node.ParentNode.InsertAfter(h4Node, node);
+
+                    string src = node.GetAttributeValue("src", "");
+                    node.Attributes.RemoveAll();
+                    node.SetAttributeValue("src", src);
                 }
             }
 
