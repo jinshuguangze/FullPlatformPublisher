@@ -1586,8 +1586,6 @@ namespace FullPlatformPublisher
                     // 图标加入双击事件绑定，打开文件夹
                     image.DoubleTapped += (sender, e) =>
                     {
-                        // 清空打开文件对象，显示文件夹子视图
-                        TheOpenedFile = new OpenedFile();
                         addGridElementAsync(uri + "/" + item.Name);
                     };
                 }
@@ -1599,12 +1597,12 @@ namespace FullPlatformPublisher
                     // 图标加入双击事件绑定，打开相关文件
                     image.DoubleTapped += async (sender, e) =>
                     {
-                        // 清空打开文件对象
-                        TheOpenedFile = new OpenedFile();
-
                         // 图片文件的双击事件
                         if (Array.Exists<string>(SupportImageTypes, s => s.Equals("." + fileType)))
                         {
+                            // 清空打开文件对象
+                            TheOpenedFile = new OpenedFile();
+
                             // 视图显示图片文件
                             try
                             {
@@ -1622,49 +1620,61 @@ namespace FullPlatformPublisher
                         // 其他文件的双击事件
                         else
                         {
-                            StorageFile linkedMdFile = null;
-                            StorageFile linkedHtmlFile = null;
-                            if (fileType.Equals("md"))
+                            if ((file.Equals(TheOpenedFile.LinkedMdFile) || file.Equals(TheOpenedFile.LinkedHtmlFile)))
                             {
-                                linkedMdFile = file;
-                                try
-                                {
-                                    linkedHtmlFile = await (await file.GetParentAsync())
-                                        .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf('.')) + ".html");
-                                }
-                                catch (FileNotFoundException fnfe)
-                                {
-                                    System.Diagnostics.Debug.WriteLine(fnfe);
-                                    System.Diagnostics.Debug.WriteLine("文件" + file.Name + "的对应html文件缺失，路径为：" + file.Path);
-                                    return;
-                                }
-                            }
-                            else if (fileType.Equals("html"))
-                            {
-                                linkedHtmlFile = file;
-                                try
-                                {
-                                    linkedMdFile = await (await file.GetParentAsync())
-                                        .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf('.')) + ".md");
-                                }
-                                catch (FileNotFoundException fnfe)
-                                {
-                                    System.Diagnostics.Debug.WriteLine(fnfe);
-                                    System.Diagnostics.Debug.WriteLine("文件" + file.Name + "的对应md文件缺失，路径为：" + file.Path);
-                                    return;
-                                }
-                            }
-
-                            // 如果双向绑定成功
-                            if (linkedMdFile != null && linkedHtmlFile != null)
-                            {
-                                // 存储已打开文件对象
-                                TheOpenedFile.LinkedMdFile = linkedMdFile;
-                                TheOpenedFile.LinkedHtmlFile = linkedHtmlFile;
-                                TheOpenedFile.Html = htmlPreprocessing(await FileIO.ReadTextAsync(linkedHtmlFile));
-
                                 // 视图统一显示html的文件
-                                file = linkedHtmlFile;
+                                file = TheOpenedFile.LinkedHtmlFile;
+                            }
+                            else
+                            {
+                                // 清空打开文件对象
+                                TheOpenedFile = new OpenedFile();
+
+                                // 进行双向绑定
+                                StorageFile linkedMdFile = null;
+                                StorageFile linkedHtmlFile = null;
+                                if (fileType.Equals("md"))
+                                {
+                                    linkedMdFile = file;
+                                    try
+                                    {
+                                        linkedHtmlFile = await (await file.GetParentAsync())
+                                            .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf('.')) + ".html");
+                                    }
+                                    catch (FileNotFoundException fnfe)
+                                    {
+                                        System.Diagnostics.Debug.WriteLine(fnfe);
+                                        System.Diagnostics.Debug.WriteLine("文件" + file.Name + "的对应html文件缺失，路径为：" + file.Path);
+                                        return;
+                                    }
+                                }
+                                else if (fileType.Equals("html"))
+                                {
+                                    linkedHtmlFile = file;
+                                    try
+                                    {
+                                        linkedMdFile = await (await file.GetParentAsync())
+                                            .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf('.')) + ".md");
+                                    }
+                                    catch (FileNotFoundException fnfe)
+                                    {
+                                        System.Diagnostics.Debug.WriteLine(fnfe);
+                                        System.Diagnostics.Debug.WriteLine("文件" + file.Name + "的对应md文件缺失，路径为：" + file.Path);
+                                        return;
+                                    }
+                                }
+
+                                // 如果双向绑定成功
+                                if (linkedMdFile != null && linkedHtmlFile != null)
+                                {
+                                    // 存储已打开文件对象
+                                    TheOpenedFile.LinkedMdFile = linkedMdFile;
+                                    TheOpenedFile.LinkedHtmlFile = linkedHtmlFile;
+                                    TheOpenedFile.Html = htmlPreprocessing(await FileIO.ReadTextAsync(linkedHtmlFile));
+
+                                    // 视图统一显示html的文件
+                                    file = linkedHtmlFile;
+                                }
                             }
 
                             // 视图显示其他文件
@@ -2334,5 +2344,10 @@ namespace FullPlatformPublisher
         public string HexboxHtml { get; internal set; }
 
         // md字段
+        // 已上传成功图片的绑定列表
+        // string[0]：上传的uri
+        // string[1]：原始图片path
+        // string[2]：已处理图片path
+        public ArrayList LinkedImageFile { get; internal set; }
     }
 }
