@@ -22,6 +22,7 @@ using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
+using Windows.UI.Xaml.Shapes;
 using Windows.Web.Http;
 
 // TODO：
@@ -150,43 +151,6 @@ namespace FullPlatformPublisher
                     mdImageTitleArray.Add(mdImageTitle);
                 }
 
-                //    // 如果是本地图片地址，这套逻辑大改
-                //    if (!(mdImagePath.StartsWith("http://") || mdImagePath.StartsWith("https://")))
-                //    {
-                //        mdImagePathArray.Add(mdImagePath);
-                //    }
-                //    // 如果是网络图片地址
-                //    else
-                //    {
-                //        // 如果是已上传图片，则寻找绑定图片，若找到，则跳过，若找不到任意图片，则下载并填充缺失，更新字段
-                //        /////////////////////////////////////////////
-                //        StorageFile uriImage = await downloadImageUri(new Uri(mdImagePath), originalImagesFolder);
-                //        // 下载失败
-                //        if (uriImage == null)
-                //        {
-                //            mdImagePathArray.Add(null);
-                //        }
-                //        // 下载成功
-                //        else
-                //        {   
-                //            // 如果是已上传图片
-                //            if (mdImagePath.StartsWith(PostPrefix))
-                //            {
-                //                await uriImage.RenameAsync(hashcode + "#" + i + uriImage.FileType, NameCollisionOption.ReplaceExisting);
-                //                await uriImage.CopyAsync(processedImagesFolder, uriImage.Name, NameCollisionOption.ReplaceExisting);
-                //                mdImagePathArray.Add(mdImagePath);
-                //            }
-                //            // 如果是纯网络图片
-                //            else
-                //            {
-                //                await uriImage.RenameAsync(hashcode + "#" + i + "#temp" + uriImage.FileType, NameCollisionOption.ReplaceExisting);
-                //                mdImagePathArray.Add(OriginalImages + "/" + uriImage.Name);
-                //            }
-                //        }
-                //    }
-                //    mdImageTitleArray.Add(mdImageTitle);
-                //}
-
                 // 读取logo图像素材
                 CanvasDevice canvasDevice = new CanvasDevice(true);
                 StorageFile logoFile = await getFileFromUri(Root + "/logo0.png");
@@ -204,7 +168,8 @@ namespace FullPlatformPublisher
                 foreach (string mdImagePath in mdImagePathArray)
                 {
                     i++;
-                    int LinkedIndex = -1;
+                    int linkedIndex = -1;
+                    bool toProcess = true;
                     StorageFile processedImageFile = null;
                     StorageFile imageFile = null;
                     // 已上传指定图床图片
@@ -220,21 +185,22 @@ namespace FullPlatformPublisher
                                 && !TheOpenedFile.LinkedProcessedPath[index].Equals("")
                                 && (processedImageFile = await getFileFromUri(currentFolder, TheOpenedFile.LinkedProcessedPath[index].ToString())) != null)
                             {
+                                // 绑定原图地址字段
                                 string originalPath= TheOpenedFile.LinkedOriginalPath[index].ToString();
                                 int originalPosition = originalPath.LastIndexOf(imageFile.Name);
                                 originalPath.Remove(originalPosition, imageFile.Name.Length)
                                     .Insert(originalPosition, i + imageFile.FileType);
                                 TheOpenedFile.LinkedOriginalPath[index] = originalPath;
-
+                                // 绑定已处理图片地址字段
                                 string processedPath = TheOpenedFile.LinkedProcessedPath[index].ToString();
                                 int processedPosition = processedPath.LastIndexOf(processedImageFile.Name);
                                 processedPath.Remove(processedPosition, processedImageFile.Name.Length)
                                     .Insert(processedPosition, i + processedImageFile.FileType);
                                 TheOpenedFile.LinkedProcessedPath[index] = processedPath;
-
+                                // 重命名
                                 await imageFile.RenameAsync(hashcode + "#" + i + imageFile.FileType, NameCollisionOption.ReplaceExisting);
                                 await processedImageFile.RenameAsync(hashcode + "#" + i + processedImageFile.FileType, NameCollisionOption.ReplaceExisting);
-                                
+                                // 添加Uri数组元素
                                 System.Diagnostics.Debug.WriteLine("第" + i + "张图片先前已上传图床，所以自动跳过。");
                                 mdImageUriArray.Add("");
                                 continue;
@@ -245,17 +211,18 @@ namespace FullPlatformPublisher
                                 && !TheOpenedFile.LinkedProcessedPath[index].Equals("")
                                 && (processedImageFile = await getFileFromUri(currentFolder, TheOpenedFile.LinkedProcessedPath[index].ToString())) != null)
                             {
+                                // 绑定已处理图片地址字段，重命名
                                 string processedPath = TheOpenedFile.LinkedProcessedPath[index].ToString();
                                 int processedPosition = processedPath.LastIndexOf(processedImageFile.Name);
                                 processedPath.Remove(processedPosition, processedImageFile.Name.Length)
                                     .Insert(processedPosition, i + processedImageFile.FileType);
                                 TheOpenedFile.LinkedProcessedPath[index] = processedPath;
                                 await processedImageFile.RenameAsync(hashcode + "#" + i + processedImageFile.FileType, NameCollisionOption.ReplaceExisting);
-
+                                // 绑定原图地址字段
                                 imageFile = await processedImageFile.CopyAsync(originalImagesFolder
                                     , processedImageFile.Name, NameCollisionOption.ReplaceExisting);
                                 TheOpenedFile.LinkedOriginalPath[index] = OriginalImages + "/" + i + imageFile.FileType;
-
+                                // 添加Uri数组元素
                                 System.Diagnostics.Debug.WriteLine("第" + i + "张图片先前已上传图床，但原图片缺失，已自动填充并跳过。");
                                 mdImageUriArray.Add("");
                                 continue;
@@ -266,44 +233,50 @@ namespace FullPlatformPublisher
                                 && (TheOpenedFile.LinkedProcessedPath[index].Equals("")
                                 || (processedImageFile = await getFileFromUri(currentFolder, TheOpenedFile.LinkedProcessedPath[index].ToString())) == null))
                             {
+                                // 绑定原图地址字段，重命名
                                 string originalPath = TheOpenedFile.LinkedOriginalPath[index].ToString();
                                 int originalPosition = originalPath.LastIndexOf(imageFile.Name);
                                 originalPath.Remove(originalPosition, imageFile.Name.Length)
                                     .Insert(originalPosition, i + imageFile.FileType);
                                 TheOpenedFile.LinkedOriginalPath[index] = originalPath;
                                 await imageFile.RenameAsync(hashcode + "#" + i + imageFile.FileType, NameCollisionOption.ReplaceExisting);
-
+                                // 下载处理后图片
                                 processedImageFile = await downloadImageUri(new Uri(mdImagePath), processedImagesFolder);
                                 // 下载成功
                                 if (processedImageFile != null)
                                 {
+                                    // 绑定已处理图片地址字段，重命名
                                     TheOpenedFile.LinkedProcessedPath[index] = ProcessedImages + "/" + i + processedImageFile.FileType;
                                     await processedImageFile.RenameAsync(hashcode + "#" + i + processedImageFile.FileType, NameCollisionOption.ReplaceExisting);
-
+                                    // 添加Uri数组元素
                                     System.Diagnostics.Debug.WriteLine("第" + i + "张图片先前已上传图床，但处理后图片缺失，已自动下载并跳过。");
                                     mdImageUriArray.Add("");
                                     continue;
                                 }
                                 // 下载失败
+                                // 进入主体
                                 else 
-                                { 
-                                    // 将图片进行处理后上传，将theOpenedFile的字段相应作出改变index
+                                {
+                                    // 记录绑定序号
+                                    linkedIndex = index;
                                 }
                             }
                             // 原图，处理图：无，无 
                             else
                             {
+                                // 下载处理后图片
                                 processedImageFile = await downloadImageUri(new Uri(mdImagePath), processedImagesFolder);
                                 // 下载成功
                                 if (processedImageFile != null)
                                 {
+                                    // 绑定已处理图片地址字段，重命名
                                     TheOpenedFile.LinkedProcessedPath[index] = ProcessedImages + "/" + i + processedImageFile.FileType;
                                     await processedImageFile.RenameAsync(hashcode + "#" + i + processedImageFile.FileType, NameCollisionOption.ReplaceExisting);
-
+                                    // 绑定原图地址字段，重命名
                                     imageFile = await processedImageFile.CopyAsync(originalImagesFolder
                                         , processedImageFile.Name, NameCollisionOption.ReplaceExisting);
                                     TheOpenedFile.LinkedOriginalPath[index] = OriginalImages + "/" + i + imageFile.FileType;
-
+                                    // 添加Uri数组元素
                                     System.Diagnostics.Debug.WriteLine("第" + i + "张图片先前已上传图床，但原图片和处理后图片缺失，已自动下载并跳过。");
                                     mdImageUriArray.Add("");
                                     continue;
@@ -311,28 +284,35 @@ namespace FullPlatformPublisher
                                 // 下载失败
                                 else
                                 {
+                                    // 移除绑定字段
+                                    TheOpenedFile.LinkedImageUri.RemoveAt(index);
+                                    TheOpenedFile.LinkedOriginalPath.RemoveAt(index);
+                                    TheOpenedFile.LinkedProcessedPath.RemoveAt(index);
+                                    // 添加Uri数组元素
                                     System.Diagnostics.Debug.WriteLine("第" + i + "张图片先前已上传图床，但原图片和处理后图片缺失且从图床下载失败，已自动跳过。");
                                     mdImageUriArray.Add("");
                                     continue;
                                 }
                             }
                         }
-                        // 未绑定uri
+                        // 未绑定Uri
                         else
                         {
+                            // 下载处理后图片
                             processedImageFile = await downloadImageUri(new Uri(mdImagePath), processedImagesFolder);
                             // 下载成功
                             if (processedImageFile != null)
                             {
+                                // 绑定Uri地址字段
                                 TheOpenedFile.LinkedImageUri.Add(mdImagePath);
-
+                                // 绑定已处理图片地址字段，重命名
                                 TheOpenedFile.LinkedProcessedPath.Add(ProcessedImages + "/" + i + processedImageFile.FileType);
                                 await processedImageFile.RenameAsync(hashcode + "#" + i + processedImageFile.FileType, NameCollisionOption.ReplaceExisting);
-
+                                // 绑定原图地址字段
                                 imageFile = await processedImageFile.CopyAsync(originalImagesFolder
                                     , processedImageFile.Name, NameCollisionOption.ReplaceExisting);
                                 TheOpenedFile.LinkedOriginalPath.Add(OriginalImages + "/" + i + imageFile.FileType);
-
+                                // 添加Uri数组元素
                                 System.Diagnostics.Debug.WriteLine("第" + i + "张图片先前已上传图床，但原图片和处理后图片不在本地，已自动下载并跳过。");
                                 mdImageUriArray.Add("");
                                 continue;
@@ -340,6 +320,7 @@ namespace FullPlatformPublisher
                             // 下载失败
                             else
                             {
+                                // 添加Uri数组元素
                                 System.Diagnostics.Debug.WriteLine("第" + i + "张图片先前已上传图床，但原图片和处理后图片不在本地且从图床下载失败，已自动跳过。");
                                 mdImageUriArray.Add("");
                                 continue;
@@ -349,15 +330,16 @@ namespace FullPlatformPublisher
                     // 网络图片
                     else if (mdImagePath.StartsWith("http://") || mdImagePath.StartsWith("https://"))
                     {
+                        // 下载原图片
                         imageFile = await downloadImageUri(new Uri(mdImagePath), originalImagesFolder);
                         // 下载成功
+                        // 进入主体
                         if (imageFile != null)
                         {
-                            //index......................
-                            TheOpenedFile.LinkedOriginalPath.Add(ProcessedImages + "/" + i + imageFile.FileType);
+                            // 绑定原图地址字段，重命名
+                            TheOpenedFile.LinkedOriginalPath.Add(OriginalImages + "/" + i + imageFile.FileType);
+                            linkedIndex = TheOpenedFile.LinkedOriginalPath.Count - 1;
                             await imageFile.RenameAsync(hashcode + "#" + i + imageFile.FileType, NameCollisionOption.ReplaceExisting);
-
-                            // toprocess=true
                         }
                         // 下载失败
                         else
@@ -371,7 +353,7 @@ namespace FullPlatformPublisher
                     else
                     {
                         int index = TheOpenedFile.LinkedOriginalPath.IndexOf(mdImagePath);
-                        // 已绑定Uri
+                        // 已绑定原图地址
                         if (index != -1)
                         {
                             // 图床网址，原图，处理图：有，有，有
@@ -380,15 +362,45 @@ namespace FullPlatformPublisher
                             && !TheOpenedFile.LinkedProcessedPath[index].Equals("")
                             && (processedImageFile = await getFileFromUri(currentFolder, TheOpenedFile.LinkedProcessedPath[index].ToString())) != null)
                             {
-
+                                // 绑定原图地址字段，重命名
+                                int originalPosition = mdImagePath.LastIndexOf(imageFile.Name);
+                                mdImagePath.Remove(originalPosition, imageFile.Name.Length)
+                                    .Insert(originalPosition, i + imageFile.FileType);
+                                TheOpenedFile.LinkedOriginalPath[index] = mdImagePath;
+                                await imageFile.RenameAsync(hashcode + "#" + i + imageFile.FileType, NameCollisionOption.ReplaceExisting);
+                                // 绑定已处理图片地址字段，重命名
+                                string processedPath = TheOpenedFile.LinkedProcessedPath[index].ToString();
+                                int processedPosition = processedPath.LastIndexOf(processedImageFile.Name);
+                                processedPath.Remove(processedPosition, processedImageFile.Name.Length)
+                                    .Insert(processedPosition, i + processedImageFile.FileType);
+                                TheOpenedFile.LinkedProcessedPath[index] = processedPath;
+                                await processedImageFile.RenameAsync(hashcode + "#" + i + processedImageFile.FileType, NameCollisionOption.ReplaceExisting);
+                                // 添加Uri数组元素
+                                mdImageUriArray.Add(TheOpenedFile.LinkedImageUri[index]);
+                                continue;
                             }
                             // 图床网址，原图，处理图：无，有，有
+                            // 进入主体
                             else if (TheOpenedFile.LinkedImageUri[index].Equals("")
                             && (imageFile = await getFileFromUri(currentFolder, mdImagePath)) != null
                             && !TheOpenedFile.LinkedProcessedPath[index].Equals("")
                             && (processedImageFile = await getFileFromUri(currentFolder, TheOpenedFile.LinkedProcessedPath[index].ToString())) != null)
-                            { 
-                            
+                            {
+                                // 绑定原图地址字段，重命名
+                                int originalPosition = mdImagePath.LastIndexOf(imageFile.Name);
+                                mdImagePath.Remove(originalPosition, imageFile.Name.Length)
+                                    .Insert(originalPosition, i + imageFile.FileType);
+                                TheOpenedFile.LinkedOriginalPath[index] = mdImagePath;
+                                await imageFile.RenameAsync(hashcode + "#" + i + imageFile.FileType, NameCollisionOption.ReplaceExisting);
+                                // 绑定已处理图片地址字段，重命名
+                                string processedPath = TheOpenedFile.LinkedProcessedPath[index].ToString();
+                                int processedPosition = processedPath.LastIndexOf(processedImageFile.Name);
+                                processedPath.Remove(processedPosition, processedImageFile.Name.Length)
+                                    .Insert(processedPosition, i + processedImageFile.FileType);
+                                TheOpenedFile.LinkedProcessedPath[index] = processedPath;
+                                await processedImageFile.RenameAsync(hashcode + "#" + i + processedImageFile.FileType, NameCollisionOption.ReplaceExisting);
+                                // 添加处理标志
+                                toProcess = false;
                             }
                             // 图床网址，原图，处理图：有，无，有
                             else if (!TheOpenedFile.LinkedImageUri[index].Equals("")
@@ -396,7 +408,21 @@ namespace FullPlatformPublisher
                             && !TheOpenedFile.LinkedProcessedPath[index].Equals("")
                             && (processedImageFile = await getFileFromUri(currentFolder, TheOpenedFile.LinkedProcessedPath[index].ToString())) != null)
                             {
-
+                                // 绑定已处理图片地址字段，重命名
+                                string processedPath = TheOpenedFile.LinkedProcessedPath[index].ToString();
+                                int processedPosition = processedPath.LastIndexOf(processedImageFile.Name);
+                                processedPath.Remove(processedPosition, processedImageFile.Name.Length)
+                                    .Insert(processedPosition, i + processedImageFile.FileType);
+                                TheOpenedFile.LinkedProcessedPath[index] = processedPath;
+                                await processedImageFile.RenameAsync(hashcode + "#" + i + processedImageFile.FileType, NameCollisionOption.ReplaceExisting);
+                                // 绑定原图地址字段
+                                imageFile = await processedImageFile.CopyAsync(originalImagesFolder
+                                    , processedImageFile.Name, NameCollisionOption.ReplaceExisting);
+                                TheOpenedFile.LinkedOriginalPath[index] = OriginalImages + "/" + i + imageFile.FileType;
+                                // 添加Uri数组元素
+                                System.Diagnostics.Debug.WriteLine("第" + i + "张图片先前已上传图床，但原图片缺失，已自动填充并跳过。");
+                                mdImageUriArray.Add(TheOpenedFile.LinkedImageUri[index]);
+                                continue;
                             }
                             // 图床网址，原图，处理图：有，有，无
                             else if (!TheOpenedFile.LinkedImageUri[index].Equals("")
@@ -404,7 +430,33 @@ namespace FullPlatformPublisher
                             && (TheOpenedFile.LinkedProcessedPath[index].Equals("")
                             ||(processedImageFile = await getFileFromUri(currentFolder, TheOpenedFile.LinkedProcessedPath[index].ToString())) == null))
                             {
-
+                                // 绑定原图地址字段，重命名
+                                string originalPath = TheOpenedFile.LinkedOriginalPath[index].ToString();
+                                int originalPosition = originalPath.LastIndexOf(imageFile.Name);
+                                originalPath.Remove(originalPosition, imageFile.Name.Length)
+                                    .Insert(originalPosition, i + imageFile.FileType);
+                                TheOpenedFile.LinkedOriginalPath[index] = originalPath;
+                                await imageFile.RenameAsync(hashcode + "#" + i + imageFile.FileType, NameCollisionOption.ReplaceExisting);
+                                // 下载处理后图片
+                                processedImageFile = await downloadImageUri(new Uri(mdImagePath), processedImagesFolder);
+                                // 下载成功
+                                if (processedImageFile != null)
+                                {
+                                    // 绑定已处理图片地址字段，重命名
+                                    TheOpenedFile.LinkedProcessedPath[index] = ProcessedImages + "/" + i + processedImageFile.FileType;
+                                    await processedImageFile.RenameAsync(hashcode + "#" + i + processedImageFile.FileType, NameCollisionOption.ReplaceExisting);
+                                    // 添加Uri数组元素
+                                    System.Diagnostics.Debug.WriteLine("第" + i + "张图片先前已上传图床，但处理后图片缺失，已自动下载并跳过。");
+                                    mdImageUriArray.Add(TheOpenedFile.LinkedImageUri[index]);
+                                    continue;
+                                }
+                                // 下载失败
+                                // 进入主体
+                                else
+                                {
+                                    // 记录绑定序号
+                                    linkedIndex = index;
+                                }
                             }
                             // 图床网址，原图，处理图：无，无，有
                             else if (TheOpenedFile.LinkedImageUri[index].Equals("")
@@ -412,7 +464,7 @@ namespace FullPlatformPublisher
                             && !TheOpenedFile.LinkedProcessedPath[index].Equals("")
                             && (processedImageFile = await getFileFromUri(currentFolder, TheOpenedFile.LinkedProcessedPath[index].ToString())) != null)
                             {
-
+                                // 将处理图复制进原图文件夹和上传
                             }
                             // 图床网址，原图，处理图：无，有，无
                             else if (TheOpenedFile.LinkedImageUri[index].Equals("")
@@ -420,7 +472,7 @@ namespace FullPlatformPublisher
                             && (TheOpenedFile.LinkedProcessedPath[index].Equals("")
                             || (processedImageFile = await getFileFromUri(currentFolder, TheOpenedFile.LinkedProcessedPath[index].ToString())) == null))
                             {
-
+                                // 正常原图处理流程，上传
                             }
                             // 图床网址，原图，处理图：有，无，无
                             else if (!TheOpenedFile.LinkedImageUri[index].Equals("")
@@ -428,30 +480,29 @@ namespace FullPlatformPublisher
                             && (TheOpenedFile.LinkedProcessedPath[index].Equals("")
                             || (processedImageFile = await getFileFromUri(currentFolder, TheOpenedFile.LinkedProcessedPath[index].ToString())) == null))
                             {
-
+                                // 图床网址下载后，放入原图和处理图片文件夹中
                             }
                             // 图床网址，原图，处理图：无，无，无
                             else
                             {
-
+                                // 丢失，无法处理 
                             }
                         }
-                        // 未绑定Uri
+                        // 未绑定原图地址
                         else
                         {
-                        
+                            // 普通处理，分为能否获取原图两种情况
                         }
                     }
 
-                    processedImageFile = await getFileFromUri(currentFolder, mdImagePath);
-                    TheOpenedFile.LinkedImageUri.RemoveAt(index);
-                    TheOpenedFile.LinkedOriginalPath.RemoveAt(index);
-                    TheOpenedFile.LinkedProcessedPath.RemoveAt(index);
-                    System.Diagnostics.Debug.WriteLine("第" + i + "张图片为本地图片，但本地文件\""
-                        + mdImagePath + "\"丢失！已经自动跳过，请稍后手动上传。");
-                    mdImageUriArray.Add("");
-                    continue;
-
+                    //processedImageFile = await getFileFromUri(currentFolder, mdImagePath);
+                    //TheOpenedFile.LinkedImageUri.RemoveAt(index);
+                    //TheOpenedFile.LinkedOriginalPath.RemoveAt(index);
+                    //TheOpenedFile.LinkedProcessedPath.RemoveAt(index);
+                    //System.Diagnostics.Debug.WriteLine("第" + i + "张图片为本地图片，但本地文件\""
+                    //    + mdImagePath + "\"丢失！已经自动跳过，请稍后手动上传。");
+                    //mdImageUriArray.Add("");
+                    //continue;
 
 
 
@@ -463,21 +514,23 @@ namespace FullPlatformPublisher
 
                     // 判断文件在本地的位置来决定是否进行图像处理
                     // 如果是在原始图片文件夹中
-                    bool toProcess;
-                    if (mdImagePath.StartsWith(OriginalImages + "/"))
+
+                    if (TheOpenedFile.LinkedOriginalPath[linkedIndex].ToString().StartsWith(OriginalImages + "/"))
                     {
                         toProcess = true;
                     }
                     // 如果是在素材文件夹中的原始图片文件夹中
-                    else if (mdImagePath.StartsWith(RawImages + "/" + OriginalImages + "/"))
+                    else if (TheOpenedFile.LinkedOriginalPath[linkedIndex].ToString().StartsWith(RawImages + "/" + OriginalImages + "/"))
                     {
                         imageFile = await imageFile.CopyAsync(originalImagesFolder, await obtainImageNameAsync(originalImagesFolder)
                             + imageFile.FileType, NameCollisionOption.GenerateUniqueName);
                         toProcess = true;
                     }
                     // 如果是在已处理图片文件夹中
-                    else if (mdImagePath.StartsWith(ProcessedImages + "/") && setImageRealExtension(imageFile).Equals(".gif"))
+                    else if (TheOpenedFile.LinkedOriginalPath[linkedIndex].ToString().StartsWith(ProcessedImages + "/") 
+                        && setImageRealExtension(imageFile).Equals(".gif"))
                     {
+                        // ??需要重命名吗？
                         await imageFile.RenameAsync(hashcode + "#" + i + ".gif", NameCollisionOption.ReplaceExisting);
                         processedImageFile = imageFile;
                         imageFile = await imageFile.CopyAsync(originalImagesFolder, await obtainImageNameAsync(originalImagesFolder)
@@ -485,7 +538,8 @@ namespace FullPlatformPublisher
                         toProcess = false;
                     }
                     // 如果是在素材文件夹中的已处理图片文件夹中
-                    else if (mdImagePath.StartsWith(RawImages + "/" + ProcessedImages + "/") && setImageRealExtension(imageFile).Equals(".gif"))
+                    else if (TheOpenedFile.LinkedOriginalPath[linkedIndex].ToString().StartsWith(RawImages + "/" + ProcessedImages + "/") 
+                        && setImageRealExtension(imageFile).Equals(".gif"))
                     {
                         imageFile = await imageFile.CopyAsync(originalImagesFolder, await obtainImageNameAsync(originalImagesFolder)
                             + imageFile.FileType, NameCollisionOption.GenerateUniqueName);
@@ -501,7 +555,9 @@ namespace FullPlatformPublisher
                     }
 
                     // 将原图片修改成不重复名称
-                    await imageFile.RenameAsync(hashcode + "#" + i + imageFile.FileType, NameCollisionOption.ReplaceExisting);
+                    // TheOpenedFile.LinkedOriginalPath.Add();
+                    // await imageFile.RenameAsync(hashcode + "#" + i + imageFile.FileType, NameCollisionOption.ReplaceExisting);
+
 
                     // 如果处理标志toProcess为真
                     if (toProcess)
