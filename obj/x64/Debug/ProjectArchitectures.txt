@@ -1,0 +1,1 @@
+S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\FullPlatformPublisher.csproj;x64

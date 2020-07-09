@@ -1,0 +1,49 @@
+﻿<Page x:ConnectionId='1' x:Name="page_mainPage"
+    x:Class="FullPlatformPublisher.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:FullPlatformPublisher"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:winUiControls="using:Microsoft.UI.Xaml.Controls"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Height="545" Width="1055">
+    <Canvas x:ConnectionId='2' x:Name="canvas_main">
+        <Canvas x:ConnectionId='3' x:Name="canvas_left" Height="545" Width="135">
+            <CheckBox x:ConnectionId='11' x:Name="checkBox_toutiao" Content="今日头条" Canvas.Left="10" Canvas.Top="10" IsChecked="True" VerticalAlignment="Top"/>
+            <CheckBox x:ConnectionId='12' x:Name="checkBox_heybox" Content="小黑盒" Canvas.Left="10" Canvas.Top="47" IsChecked="True" VerticalAlignment="Top"/>
+            <CheckBox x:ConnectionId='13' x:Name="checkBox_zhihu" Content="知乎专栏" Canvas.Left="10" Canvas.Top="84" IsChecked="True" VerticalAlignment="Top"/>
+            <CheckBox x:ConnectionId='14' x:Name="checkBox_bilibili" Content="哔哩哔哩专栏" Canvas.Left="10" Canvas.Top="121" IsChecked="True" VerticalAlignment="Top"/>
+            <CheckBox x:ConnectionId='15' x:Name="checkBox_dayu" Content="大鱼号" Canvas.Left="10" Canvas.Top="158" IsChecked="True" VerticalAlignment="Top"/>
+            <Button x:ConnectionId='16' x:Name="button_generateHtml" Content="生成文章" Canvas.Left="22" Canvas.Top="477" Height="58" Width="92"                                   RenderTransformOrigin="0.5,0.5" HorizontalContentAlignment="Center"/>
+            <winUiControls:SplitButton x:ConnectionId='17' x:Name="splitButton_new" Content="新建" Canvas.Left="22" Canvas.Top="351" Height="58" Width="92" Padding="8,5,8,6" VerticalContentAlignment="Center" HorizontalAlignment="Left"/>
+            <ToggleSwitch x:ConnectionId='18' x:Name="toggleSwitch_spy" Header="打开剪贴板监管" Canvas.Top="295" Width="100" HorizontalContentAlignment="Left" ScrollViewer.VerticalScrollBarVisibility="Disabled" Canvas.Left="18" HorizontalAlignment="Left"                                   />
+            <Button x:ConnectionId='19' x:Name="button_uploadImage" Content="上传图片" Canvas.Left="22" Canvas.Top="414" Height="58" Width="92"                                       RenderTransformOrigin="0.5,0.5" HorizontalContentAlignment="Center"/>
+        </Canvas>
+        <WebView x:ConnectionId='4' x:Name="webView_viewer" Canvas.Left="135" Source="https://mp.toutiao.com/profile_v3/index" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Width="420" Height="545"/>
+        <TextBox x:ConnectionId='5' x:Name="textBox_path" Canvas.Left="555" Text="Papers" TextWrapping="Wrap" Height="35" Width="350"/>
+        <Button x:ConnectionId='6' x:Name="button_flush" Content="⟲" Canvas.Left="905" Height="35" Width="50"                            BorderBrush="#FF646464"/>
+        <Button x:ConnectionId='7' x:Name="button_return" Canvas.Left="955" Height="35" Width="50" Content="↑"                             BorderBrush="#FF646464"/>
+        <ScrollViewer x:ConnectionId='8' x:Name="scrollViewer_files" Height="510" Width="500" Canvas.Left="555" Canvas.Top="35" VerticalScrollMode="Disabled" BorderBrush="#FF959595">
+            <Grid x:ConnectionId='10' x:Name="grid_files"                                 Height="510" Width="500">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="120"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="160"/>
+                    <RowDefinition Height="160"/>
+                    <RowDefinition Height="160"/>
+                    <RowDefinition Height="160"/>
+                    <RowDefinition Height="160"/>
+                    <RowDefinition Height="160"/>
+                    <RowDefinition Height="160"/>
+                </Grid.RowDefinitions>
+            </Grid>
+        </ScrollViewer>
+        <Button x:ConnectionId='9' x:Name="button_openPath" Content="📂" Canvas.Left="1005" Height="35" Width="50"                                    BorderBrush="#FF646464"/>
+    </Canvas>
+</Page>
+

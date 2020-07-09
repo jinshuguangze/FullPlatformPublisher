@@ -1,0 +1,337 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Machine>JINSHUGUANGZE-D</Machine>
+    <WindowsUser>jinshuguangze</WindowsUser>
+    <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
+    <TargetOsVersion>10.0</TargetOsVersion>
+    <TargetOsDescription>Windows 10.0</TargetOsDescription>
+    <SolutionConfiguration>Debug|x64</SolutionConfiguration>
+    <PackageArchitecture>x64</PackageArchitecture>
+    <PackageIdentityName>c74cd63b-07e4-4814-9cf5-094574954728</PackageIdentityName>
+    <PackageIdentityPublisher>CN=jinshuguangze</PackageIdentityPublisher>
+    <IntermediateOutputPath>S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\obj\x64\Debug\</IntermediateOutputPath>
+    <RemoteDeploymentType>
+    </RemoteDeploymentType>
+    <PackageRegistrationPath>
+    </PackageRegistrationPath>
+    <RemoveNonLayoutFiles>true</RemoveNonLayoutFiles>
+    <DeployOptionalPackages>false</DeployOptionalPackages>
+    <WindowsSdkPath>S:\Windows Kits\10\</WindowsSdkPath>
+    <LayoutDir>S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\AppX</LayoutDir>
+    <RegisteredManifestChecksum>C640C16D0B666AB44385481608D891B9FBC8198CB4434C03A32193E370C1FD0F</RegisteredManifestChecksum>
+    <RegisteredPackageMoniker>c74cd63b-07e4-4814-9cf5-094574954728_1.0.0.0_x64__jrf93qhg7j2f4</RegisteredPackageMoniker>
+    <RegisteredUserModeAppID>c74cd63b-07e4-4814-9cf5-094574954728_jrf93qhg7j2f4!App</RegisteredUserModeAppID>
+    <RegisteredPackageID>c74cd63b-07e4-4814-9cf5-094574954728</RegisteredPackageID>
+    <RegisteredPackagePublisher>CN=jinshuguangze</RegisteredPackagePublisher>
+    <RegisteredVersion>1.0.0.0</RegisteredVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <AppXManifest Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\Core\AppxManifest.xml">
+      <PackagePath>AppxManifest.xml</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2020-07-09T17:28:13.221</Modified>
+    </AppXManifest>
+  </ItemGroup>
+  <ItemGroup>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\FullPlatformPublisher.exe">
+      <PackagePath>entrypoint\FullPlatformPublisher.exe</PackagePath>
+      <Modified>2020-07-09T17:28:12.127</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\htmlagilitypack\1.11.24\lib\uap10.0\HtmlAgilityPack.dll">
+      <PackagePath>HtmlAgilityPack.dll</PackagePath>
+      <Modified>2020-05-30T10:58:14.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\runtime.win10-x64.microsoft.netcore.universalwindowsplatform\6.2.10\runtimes\win10-x64\lib\uap10.0.15138\System.Runtime.dll">
+      <PackagePath>System.Runtime.dll</PackagePath>
+      <Modified>2020-02-27T11:17:32.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\win2d.uwp\1.25.0\runtimes\win10-x64\native\Microsoft.Graphics.Canvas.dll">
+      <PackagePath>Microsoft.Graphics.Canvas.dll</PackagePath>
+      <Modified>2020-04-02T11:46:32.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\win2d.uwp\1.25.0\lib\uap10.0\Microsoft.Graphics.Canvas.winmd">
+      <PackagePath>Microsoft.Graphics.Canvas.winmd</PackagePath>
+      <Modified>2020-04-02T11:44:36.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Windows Kits\10\bin\10.0.19041.0\XamlCompiler\Microsoft.UI.Xaml.Markup.winmd">
+      <PackagePath>Microsoft.UI.Xaml.Markup.winmd</PackagePath>
+      <Modified>2019-12-06T12:24:14.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\bmp.ico">
+      <PackagePath>Assets\icons\bmp.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.303</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\default.ico">
+      <PackagePath>Assets\icons\default.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.312</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\doc.ico">
+      <PackagePath>Assets\icons\doc.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.314</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\docx.ico">
+      <PackagePath>Assets\icons\docx.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.316</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\folder.ico">
+      <PackagePath>Assets\icons\folder.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.317</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\folder_null.ico">
+      <PackagePath>Assets\icons\folder_null.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.319</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\gif.ico">
+      <PackagePath>Assets\icons\gif.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.321</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\html.ico">
+      <PackagePath>Assets\icons\html.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.323</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\jfif.ico">
+      <PackagePath>Assets\icons\jfif.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.324</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\jpeg.ico">
+      <PackagePath>Assets\icons\jpeg.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.326</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\jpg.ico">
+      <PackagePath>Assets\icons\jpg.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.327</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\md.ico">
+      <PackagePath>Assets\icons\md.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.329</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\png.ico">
+      <PackagePath>Assets\icons\png.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.330</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\tif.ico">
+      <PackagePath>Assets\icons\tif.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.332</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\tiff.ico">
+      <PackagePath>Assets\icons\tiff.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.333</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\icons\txt.ico">
+      <PackagePath>Assets\icons\txt.ico</PackagePath>
+      <Modified>2020-05-15T13:18:24.335</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Properties\Default.rd.xml">
+      <PackagePath>Properties\Default.rd.xml</PackagePath>
+      <Modified>2020-05-13T07:03:36.597</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\LockScreenLogo.scale-200.png">
+      <PackagePath>Assets\LockScreenLogo.scale-200.png</PackagePath>
+      <Modified>2020-05-12T11:18:38.571</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\SplashScreen.scale-200.png">
+      <PackagePath>Assets\SplashScreen.scale-200.png</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2020-05-12T11:18:38.571</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\Square150x150Logo.scale-200.png">
+      <PackagePath>Assets\Square150x150Logo.scale-200.png</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2020-05-12T11:18:38.571</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\Square44x44Logo.scale-200.png">
+      <PackagePath>Assets\Square44x44Logo.scale-200.png</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2020-05-12T11:18:38.571</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\Square44x44Logo.targetsize-24_altform-unplated.png">
+      <PackagePath>Assets\Square44x44Logo.targetsize-24_altform-unplated.png</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2020-05-12T11:18:38.571</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\StoreLogo.png">
+      <PackagePath>Assets\StoreLogo.png</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2020-05-12T11:18:38.571</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\Wide310x150Logo.scale-200.png">
+      <PackagePath>Assets\Wide310x150Logo.scale-200.png</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2020-05-12T11:18:38.571</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\Assets\fonts\qingsong.ttf">
+      <PackagePath>Assets\fonts\qingsong.ttf</PackagePath>
+      <Modified>2020-06-06T09:27:45.724</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\FullPlatformPublisher.xr.xml">
+      <PackagePath>FullPlatformPublisher.xr.xml</PackagePath>
+      <Modified>2020-07-09T11:10:53.669</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\App.xbf">
+      <PackagePath>App.xbf</PackagePath>
+      <Modified>2020-07-09T15:44:44.930</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\MainPage.xbf">
+      <PackagePath>MainPage.xbf</PackagePath>
+      <Modified>2020-07-09T15:44:44.930</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Program Files %28x86%29\Microsoft SDKs\Windows Kits\10\ExtensionSDKs\Microsoft.UniversalCRT.Debug\10.0.19041.0\\redist\Debug\X64\ucrtbased.dll">
+      <PackagePath>ucrtbased.dll</PackagePath>
+      <Modified>2019-12-06T14:09:34.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Windows Kits\10\UnionMetadata\10.0.19041.0\Windows.winmd">
+      <PackagePath>WinMetadata\Windows.winmd</PackagePath>
+      <Modified>2019-12-06T10:33:46.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\microsoft.ui.xaml\2.4.2\buildTransitive\..\lib\uap10.0\Microsoft.UI.Xaml.winmd">
+      <PackagePath>WinMetadata\Microsoft.UI.Xaml.winmd</PackagePath>
+      <Modified>2020-05-19T01:27:08.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\resources.pri">
+      <PackagePath>resources.pri</PackagePath>
+      <Modified>2020-07-09T11:10:54.556</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\Core\FullPlatformPublisher.exe">
+      <PackagePath>FullPlatformPublisher.exe</PackagePath>
+      <Modified>2020-07-09T17:28:13.205</Modified>
+    </AppxPackagedFile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResolvedSDKReference Include="C:\Users\jinshuguangze\.nuget\packages\microsoft.ui.xaml\2.4.2\buildTransitive\..\tools\AppX\x86\Release\Microsoft.UI.Xaml.2.4.appx">
+      <Name>Microsoft.UI.Xaml.2.4</Name>
+      <Version>2.42005.18002.0</Version>
+      <Architecture>x86</Architecture>
+      <FrameworkIdentity>Name = Microsoft.UI.Xaml.2.4, MinVersion = 2.42005.18002.0, Publisher = %27CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US%27</FrameworkIdentity>
+      <AppxLocation>C:\Users\jinshuguangze\.nuget\packages\microsoft.ui.xaml\2.4.2\buildTransitive\..\tools\AppX\x86\Release\Microsoft.UI.Xaml.2.4.appx</AppxLocation>
+      <MoreInfo>
+      </MoreInfo>
+    </ResolvedSDKReference>
+    <ResolvedSDKReference Include="C:\Users\jinshuguangze\.nuget\packages\microsoft.ui.xaml\2.4.2\buildTransitive\..\tools\AppX\x86\Release\Microsoft.UI.Xaml.2.4.appx">
+      <Name>Microsoft.UI.Xaml.2.4</Name>
+      <Version>2.42005.18002.0</Version>
+      <Architecture>Win32</Architecture>
+      <FrameworkIdentity>Name = Microsoft.UI.Xaml.2.4, MinVersion = 2.42005.18002.0, Publisher = %27CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US%27</FrameworkIdentity>
+      <AppxLocation>C:\Users\jinshuguangze\.nuget\packages\microsoft.ui.xaml\2.4.2\buildTransitive\..\tools\AppX\x86\Release\Microsoft.UI.Xaml.2.4.appx</AppxLocation>
+      <MoreInfo>
+      </MoreInfo>
+    </ResolvedSDKReference>
+    <ResolvedSDKReference Include="C:\Users\jinshuguangze\.nuget\packages\microsoft.ui.xaml\2.4.2\buildTransitive\..\tools\AppX\x64\Release\Microsoft.UI.Xaml.2.4.appx">
+      <Name>Microsoft.UI.Xaml.2.4</Name>
+      <Version>2.42005.18002.0</Version>
+      <Architecture>x64</Architecture>
+      <FrameworkIdentity>Name = Microsoft.UI.Xaml.2.4, MinVersion = 2.42005.18002.0, Publisher = %27CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US%27</FrameworkIdentity>
+      <AppxLocation>C:\Users\jinshuguangze\.nuget\packages\microsoft.ui.xaml\2.4.2\buildTransitive\..\tools\AppX\x64\Release\Microsoft.UI.Xaml.2.4.appx</AppxLocation>
+      <MoreInfo>
+      </MoreInfo>
+    </ResolvedSDKReference>
+    <ResolvedSDKReference Include="C:\Users\jinshuguangze\.nuget\packages\microsoft.ui.xaml\2.4.2\buildTransitive\..\tools\AppX\arm\Release\Microsoft.UI.Xaml.2.4.appx">
+      <Name>Microsoft.UI.Xaml.2.4</Name>
+      <Version>2.42005.18002.0</Version>
+      <Architecture>arm</Architecture>
+      <FrameworkIdentity>Name = Microsoft.UI.Xaml.2.4, MinVersion = 2.42005.18002.0, Publisher = %27CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US%27</FrameworkIdentity>
+      <AppxLocation>C:\Users\jinshuguangze\.nuget\packages\microsoft.ui.xaml\2.4.2\buildTransitive\..\tools\AppX\arm\Release\Microsoft.UI.Xaml.2.4.appx</AppxLocation>
+      <MoreInfo>
+      </MoreInfo>
+    </ResolvedSDKReference>
+    <ResolvedSDKReference Include="C:\Users\jinshuguangze\.nuget\packages\microsoft.ui.xaml\2.4.2\buildTransitive\..\tools\AppX\arm64\Release\Microsoft.UI.Xaml.2.4.appx">
+      <Name>Microsoft.UI.Xaml.2.4</Name>
+      <Version>2.42005.18002.0</Version>
+      <Architecture>arm64</Architecture>
+      <FrameworkIdentity>Name = Microsoft.UI.Xaml.2.4, MinVersion = 2.42005.18002.0, Publisher = %27CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US%27</FrameworkIdentity>
+      <AppxLocation>C:\Users\jinshuguangze\.nuget\packages\microsoft.ui.xaml\2.4.2\buildTransitive\..\tools\AppX\arm64\Release\Microsoft.UI.Xaml.2.4.appx</AppxLocation>
+      <MoreInfo>
+      </MoreInfo>
+    </ResolvedSDKReference>
+    <ResolvedSDKReference Include="C:\Users\jinshuguangze\.nuget\packages\runtime.win10-x86.microsoft.net.uwpcoreruntimesdk\2.2.10\build\..\tools\Appx\Microsoft.NET.CoreRuntime.2.2.appx">
+      <Name>Microsoft.NET.CoreRuntime.2.2</Name>
+      <Version>2.2.27902.3</Version>
+      <Architecture>x86</Architecture>
+      <FrameworkIdentity>Name = Microsoft.NET.CoreRuntime.2.2, MinVersion = 2.2.27902.3, Publisher = %27CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US%27</FrameworkIdentity>
+      <AppxLocation>C:\Users\jinshuguangze\.nuget\packages\runtime.win10-x86.microsoft.net.uwpcoreruntimesdk\2.2.10\build\..\tools\Appx\Microsoft.NET.CoreRuntime.2.2.appx</AppxLocation>
+      <MoreInfo>
+      </MoreInfo>
+    </ResolvedSDKReference>
+    <ResolvedSDKReference Include="C:\Users\jinshuguangze\.nuget\packages\runtime.win10-x64.microsoft.net.uwpcoreruntimesdk\2.2.10\build\..\tools\Appx\Microsoft.NET.CoreRuntime.2.2.appx">
+      <Name>Microsoft.NET.CoreRuntime.2.2</Name>
+      <Version>2.2.27902.3</Version>
+      <Architecture>x64</Architecture>
+      <FrameworkIdentity>Name = Microsoft.NET.CoreRuntime.2.2, MinVersion = 2.2.27902.3, Publisher = %27CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US%27</FrameworkIdentity>
+      <AppxLocation>C:\Users\jinshuguangze\.nuget\packages\runtime.win10-x64.microsoft.net.uwpcoreruntimesdk\2.2.10\build\..\tools\Appx\Microsoft.NET.CoreRuntime.2.2.appx</AppxLocation>
+      <MoreInfo>
+      </MoreInfo>
+    </ResolvedSDKReference>
+    <ResolvedSDKReference Include="C:\Users\jinshuguangze\.nuget\packages\runtime.win10-arm.microsoft.net.uwpcoreruntimesdk\2.2.10\build\..\tools\Appx\Microsoft.NET.CoreRuntime.2.2.appx">
+      <Name>Microsoft.NET.CoreRuntime.2.2</Name>
+      <Version>2.2.27902.3</Version>
+      <Architecture>arm</Architecture>
+      <FrameworkIdentity>Name = Microsoft.NET.CoreRuntime.2.2, MinVersion = 2.2.27902.3, Publisher = %27CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US%27</FrameworkIdentity>
+      <AppxLocation>C:\Users\jinshuguangze\.nuget\packages\runtime.win10-arm.microsoft.net.uwpcoreruntimesdk\2.2.10\build\..\tools\Appx\Microsoft.NET.CoreRuntime.2.2.appx</AppxLocation>
+      <MoreInfo>
+      </MoreInfo>
+    </ResolvedSDKReference>
+    <ResolvedSDKReference Include="C:\Users\jinshuguangze\.nuget\packages\runtime.win10-x86.microsoft.net.uwpcoreruntimesdk\2.2.10\build\..\tools\Appx\Microsoft.NET.CoreFramework.Debug.2.2.appx">
+      <Name>Microsoft.NET.CoreFramework.Debug.2.2</Name>
+      <Version>2.2.28529.0</Version>
+      <Architecture>x86</Architecture>
+      <FrameworkIdentity>Name = Microsoft.NET.CoreFramework.Debug.2.2, MinVersion = 2.2.28529.0, Publisher = %27CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US%27</FrameworkIdentity>
+      <AppxLocation>C:\Users\jinshuguangze\.nuget\packages\runtime.win10-x86.microsoft.net.uwpcoreruntimesdk\2.2.10\build\..\tools\Appx\Microsoft.NET.CoreFramework.Debug.2.2.appx</AppxLocation>
+      <MoreInfo>
+      </MoreInfo>
+    </ResolvedSDKReference>
+    <ResolvedSDKReference Include="C:\Users\jinshuguangze\.nuget\packages\runtime.win10-x64.microsoft.net.uwpcoreruntimesdk\2.2.10\build\..\tools\Appx\Microsoft.NET.CoreFramework.Debug.2.2.appx">
+      <Name>Microsoft.NET.CoreFramework.Debug.2.2</Name>
+      <Version>2.2.28529.0</Version>
+      <Architecture>x64</Architecture>
+      <FrameworkIdentity>Name = Microsoft.NET.CoreFramework.Debug.2.2, MinVersion = 2.2.28529.0, Publisher = %27CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US%27</FrameworkIdentity>
+      <AppxLocation>C:\Users\jinshuguangze\.nuget\packages\runtime.win10-x64.microsoft.net.uwpcoreruntimesdk\2.2.10\build\..\tools\Appx\Microsoft.NET.CoreFramework.Debug.2.2.appx</AppxLocation>
+      <MoreInfo>
+      </MoreInfo>
+    </ResolvedSDKReference>
+    <ResolvedSDKReference Include="C:\Users\jinshuguangze\.nuget\packages\runtime.win10-arm.microsoft.net.uwpcoreruntimesdk\2.2.10\build\..\tools\Appx\Microsoft.NET.CoreFramework.Debug.2.2.appx">
+      <Name>Microsoft.NET.CoreFramework.Debug.2.2</Name>
+      <Version>2.2.28529.0</Version>
+      <Architecture>arm</Architecture>
+      <FrameworkIdentity>Name = Microsoft.NET.CoreFramework.Debug.2.2, MinVersion = 2.2.28529.0, Publisher = %27CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US%27</FrameworkIdentity>
+      <AppxLocation>C:\Users\jinshuguangze\.nuget\packages\runtime.win10-arm.microsoft.net.uwpcoreruntimesdk\2.2.10\build\..\tools\Appx\Microsoft.NET.CoreFramework.Debug.2.2.appx</AppxLocation>
+      <MoreInfo>
+      </MoreInfo>
+    </ResolvedSDKReference>
+    <ResolvedSDKReference Include="C:\Program Files %28x86%29\Microsoft SDKs\Windows Kits\10\ExtensionSDKs\Microsoft.VCLibs\14.0\">
+      <Name>Microsoft.VCLibs.140.00.Debug</Name>
+      <Version>14.0.27810.0</Version>
+      <Architecture>ARM</Architecture>
+      <FrameworkIdentity>Name = Microsoft.VCLibs.140.00.Debug, MinVersion = 14.0.27810.0, Publisher = %27CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US%27</FrameworkIdentity>
+      <AppxLocation>C:\Program Files %28x86%29\Microsoft SDKs\Windows Kits\10\ExtensionSDKs\Microsoft.VCLibs\14.0\.\AppX\Debug\ARM\Microsoft.VCLibs.ARM.Debug.14.00.appx</AppxLocation>
+      <MoreInfo>
+      </MoreInfo>
+    </ResolvedSDKReference>
+    <ResolvedSDKReference Include="C:\Program Files %28x86%29\Microsoft SDKs\Windows Kits\10\ExtensionSDKs\Microsoft.VCLibs\14.0\">
+      <Name>Microsoft.VCLibs.140.00.Debug</Name>
+      <Version>14.0.27810.0</Version>
+      <Architecture>ARM64</Architecture>
+      <FrameworkIdentity>Name = Microsoft.VCLibs.140.00.Debug, MinVersion = 14.0.27810.0, Publisher = %27CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US%27</FrameworkIdentity>
+      <AppxLocation>C:\Program Files %28x86%29\Microsoft SDKs\Windows Kits\10\ExtensionSDKs\Microsoft.VCLibs\14.0\.\AppX\Debug\ARM64\Microsoft.VCLibs.ARM64.Debug.14.00.appx</AppxLocation>
+      <MoreInfo>
+      </MoreInfo>
+    </ResolvedSDKReference>
+    <ResolvedSDKReference Include="C:\Program Files %28x86%29\Microsoft SDKs\Windows Kits\10\ExtensionSDKs\Microsoft.VCLibs\14.0\">
+      <Name>Microsoft.VCLibs.140.00.Debug</Name>
+      <Version>14.0.27810.0</Version>
+      <Architecture>x64</Architecture>
+      <FrameworkIdentity>Name = Microsoft.VCLibs.140.00.Debug, MinVersion = 14.0.27810.0, Publisher = %27CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US%27</FrameworkIdentity>
+      <AppxLocation>C:\Program Files %28x86%29\Microsoft SDKs\Windows Kits\10\ExtensionSDKs\Microsoft.VCLibs\14.0\.\AppX\Debug\x64\Microsoft.VCLibs.x64.Debug.14.00.appx</AppxLocation>
+      <MoreInfo>
+      </MoreInfo>
+    </ResolvedSDKReference>
+    <ResolvedSDKReference Include="C:\Program Files %28x86%29\Microsoft SDKs\Windows Kits\10\ExtensionSDKs\Microsoft.VCLibs\14.0\">
+      <Name>Microsoft.VCLibs.140.00.Debug</Name>
+      <Version>14.0.27810.0</Version>
+      <Architecture>x86</Architecture>
+      <FrameworkIdentity>Name = Microsoft.VCLibs.140.00.Debug, MinVersion = 14.0.27810.0, Publisher = %27CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US%27</FrameworkIdentity>
+      <AppxLocation>C:\Program Files %28x86%29\Microsoft SDKs\Windows Kits\10\ExtensionSDKs\Microsoft.VCLibs\14.0\.\AppX\Debug\x86\Microsoft.VCLibs.x86.Debug.14.00.appx</AppxLocation>
+      <MoreInfo>
+      </MoreInfo>
+    </ResolvedSDKReference>
+  </ItemGroup>
+</Project>
