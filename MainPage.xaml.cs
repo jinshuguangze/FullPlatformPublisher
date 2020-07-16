@@ -1252,7 +1252,6 @@ namespace FullPlatformPublisher
                 footNotesNode.ParentNode.ReplaceChild(referenceTitleNode, footNotesNode);
             }
 
-
             // 上标处理：普通上标变成^的形式，脚注上标将标注变成链接，链接定点是个人主页
             var superScriptNodes = doc.DocumentNode
                 .SelectNodes("//sup");
@@ -1312,8 +1311,9 @@ namespace FullPlatformPublisher
                 }
             }
 
-            // 嵌套列表处理：同类嵌套时顺序改变，非同类嵌套时变为同类嵌套
-            // 里面有引用嵌套的全部使用引号和文字代替，图片嵌套直接提取出来，列表全部进行去回车整合
+            // 列表处理：暂不做处理
+
+            // 列表嵌套处理1：列表引用嵌套全部使用引号和文字代替
             var listNodes = doc.DocumentNode
                     .SelectNodes("//ol | //ul");
             if (listNodes != null)
@@ -1346,6 +1346,7 @@ namespace FullPlatformPublisher
                 }
             }
 
+            // 列表嵌套处理2：列表图片嵌套直接提取出来
             do
             {
                 HtmlNode listImageNode = doc.DocumentNode
@@ -1356,46 +1357,25 @@ namespace FullPlatformPublisher
                     string suffix;
                     HtmlNode fatherListNode;
                     HtmlNode botherListNode;
-                    if (listImageNode.ParentNode.Name == "li")
+                    if (listImageNode.ParentNode.Name.Equals("li"))
                     {
                         fatherListNode = listImageNode.ParentNode.ParentNode.ParentNode;
                         botherListNode = listImageNode.ParentNode.ParentNode;
-                        prefix = "<" + botherListNode.Name + ">";
-                        suffix = "</" + botherListNode.Name + ">";
-                        if (listImageNode.ParentNode.InnerHtml.Replace("<br>", "").Equals(listImageNode.OuterHtml.Replace("<br>", "")))
-                        {
-                            botherListNode.RemoveChild(listImageNode.ParentNode, true);
-                        }
-                        else
-                        {
-                            prefix = prefix + "<li>";
-                            suffix = "</li>" + suffix;
-                        }
+                        prefix = "<" + botherListNode.Name + "><li>";
+                        suffix = "</li></" + botherListNode.Name + ">";
                     }
                     else
                     {
                         fatherListNode = listImageNode.ParentNode.ParentNode.ParentNode.ParentNode;
                         botherListNode = listImageNode.ParentNode.ParentNode.ParentNode;
-                        prefix = "<" + botherListNode.Name + ">";
-                        suffix = "</" + botherListNode.Name + ">";
-                        if (listImageNode.ParentNode.InnerHtml.Replace("<br>", "").Equals(listImageNode.OuterHtml.Replace("<br>", ""))
-                            && listImageNode.ParentNode.ParentNode.InnerHtml.Equals(listImageNode.ParentNode.OuterHtml))
-                        {
-                            HtmlNode tempNode = listImageNode.Clone();
-                            botherListNode.InsertBefore(tempNode, listImageNode.ParentNode.ParentNode);
-                            botherListNode.RemoveChild(listImageNode.ParentNode.ParentNode);
-                            listImageNode = tempNode;
-                        }
-                        else
-                        {
-                            prefix = prefix + "<li><p>";
-                            suffix = "</p></li>" + suffix;
-                        }
+                        prefix = "<" + botherListNode.Name + "><li><p>";
+                        suffix = "</p></li></" + botherListNode.Name + ">";
                     }
-                    listImageNode.ParentNode.InsertBefore(HtmlNode.CreateNode("<div temp=\"\"></div>"), listImageNode);
-                    listImageNode.ParentNode.InsertAfter(HtmlNode.CreateNode("<div temp=\"\"></div>"), listImageNode);
-                    string listBeforeNodeString = botherListNode.OuterHtml.Substring(0, botherListNode.OuterHtml.IndexOf("<div temp=\"\"></div>"));
-                    string listAfterNodeString = botherListNode.OuterHtml.Substring(botherListNode.OuterHtml.LastIndexOf("<div temp=\"\"></div>") + 19);
+
+                    listImageNode.Attributes.Add("POSITION", "");
+                    string listBeforeNodeString = botherListNode.OuterHtml.Split(listImageNode.OuterHtml)[0];
+                    string listAfterNodeString= botherListNode.OuterHtml.Split(listImageNode.OuterHtml)[1];
+                    listImageNode.Attributes.Remove("POSITION");
 
                     if (listBeforeNodeString.EndsWith("<br>"))
                     {
@@ -1404,43 +1384,49 @@ namespace FullPlatformPublisher
                     if (listBeforeNodeString.EndsWith("<p>"))
                     {
                         listBeforeNodeString = listBeforeNodeString.Substring(0, listBeforeNodeString.Length - 3);
-                        suffix.Replace("</p>", "");
+                        suffix = suffix.Replace("</p>", "");
                     }
                     if (listBeforeNodeString.EndsWith("<li>"))
                     {
                         listBeforeNodeString = listBeforeNodeString.Substring(0, listBeforeNodeString.Length - 4);
-                        suffix.Replace("</li>", "");
+                        suffix = suffix.Replace("</li>", "");
                     }
                     if (listBeforeNodeString.EndsWith("<" + botherListNode.Name + ">"))
                     {
                         listBeforeNodeString = listBeforeNodeString.Substring(0, listBeforeNodeString.Length - 4);
-                        suffix.Replace("</" + botherListNode.Name + ">", "");
+                        suffix = suffix.Replace("</" + botherListNode.Name + ">", "");
                     }
 
                     if (listAfterNodeString.StartsWith("<br>"))
                     {
-                        listAfterNodeString = listAfterNodeString.Substring(0, listAfterNodeString.Length - 4);
+                        listAfterNodeString = listAfterNodeString.Substring(4);
                     }
                     if (listAfterNodeString.StartsWith("</p>"))
                     {
-                        listAfterNodeString = listAfterNodeString.Substring(0, listAfterNodeString.Length - 3);
-                        prefix.Replace("<p>", "");
+                        listAfterNodeString = listAfterNodeString.Substring(4);
+                        prefix = prefix.Replace("<p>", "");
                     }
                     if (listAfterNodeString.StartsWith("</li>"))
                     {
-                        listAfterNodeString = listAfterNodeString.Substring(0, listAfterNodeString.Length - 4);
-                        prefix.Replace("<li>", "");
+                        listAfterNodeString = listAfterNodeString.Substring(5);
+                        prefix = prefix.Replace("<li>", "");
                     }
                     if (listAfterNodeString.StartsWith("</" + botherListNode.Name + ">"))
                     {
-                        listAfterNodeString = listAfterNodeString.Substring(0, listAfterNodeString.Length - 4);
-                        prefix.Replace("<" + botherListNode.Name + ">", "");
+                        listAfterNodeString = listAfterNodeString.Substring(5);
+                        prefix = prefix.Replace("<" + botherListNode.Name + ">", "");
                     }
 
-                    fatherListNode.InsertBefore(HtmlNode.CreateNode(listBeforeNodeString + suffix), botherListNode);
+                    if (!(listBeforeNodeString + suffix).Equals(""))
+                    {
+                        fatherListNode.InsertBefore(HtmlNode.CreateNode(listBeforeNodeString + suffix), botherListNode);
+                    }
                     fatherListNode.InsertBefore(listImageNode.Clone(), botherListNode);
-                    fatherListNode.InsertBefore(HtmlNode.CreateNode(prefix + listAfterNodeString), botherListNode);
-                    fatherListNode.RemoveChild(botherListNode);
+                    if (!(prefix + listAfterNodeString).Equals(""))
+                    {
+                        fatherListNode.InsertBefore(HtmlNode.CreateNode(prefix + listAfterNodeString), botherListNode);
+                    }
+                    botherListNode.Remove();
                 }
                 else
                 {
@@ -1448,6 +1434,7 @@ namespace FullPlatformPublisher
                 }
             } while (true);
 
+            // 列表嵌套处理3：多重列表嵌套，同类嵌套时顺序改变，非同类嵌套时变为同类嵌套
             do
             {
                 HtmlNode listRepeatNode = doc.DocumentNode
@@ -1457,12 +1444,12 @@ namespace FullPlatformPublisher
                     if (listRepeatNode.Name.Equals(listRepeatNode.ParentNode.ParentNode.Name))
                     {
                         HtmlNode temp = HtmlNode.CreateNode(listRepeatNode.OuterHtml);
-                        int n = listRepeatNode.ParentNode.GetAttributeValue("Num", 0);
+                        int n = listRepeatNode.ParentNode.GetAttributeValue("NUM", 0);
                         if (n == 0)
                         {
-                            listRepeatNode.ParentNode.Attributes.Add("Num", "0");
+                            listRepeatNode.ParentNode.Attributes.Add("NUM", "0");
                         }
-                        listRepeatNode.ParentNode.SetAttributeValue("Num", (n + 1).ToString());
+                        listRepeatNode.ParentNode.SetAttributeValue("NUM", (n + 1).ToString());
                         HtmlNode insertIndexNode = listRepeatNode.ParentNode;
                         for (int i = 0; i < n; i++)
                         {
@@ -1502,6 +1489,7 @@ namespace FullPlatformPublisher
                 }
             } while (true);
 
+            // 列表多余处理：清理所有多余列表
             var listDestroyNodes = doc.DocumentNode
                 .SelectNodes("//li");
             if (listDestroyNodes != null)
@@ -1509,11 +1497,15 @@ namespace FullPlatformPublisher
                 foreach (HtmlNode node in listDestroyNodes)
                 {
                     node.Attributes.RemoveAll();
+                    if (node.InnerHtml.Replace("<br>", "").Equals("")
+                        || node.InnerHtml.Replace("<br>", "").Equals("<p></p>"))
+                    {
+                        node.Remove();
+                    }
                 }
             }
 
-
-            // 区块嵌套处理1：用引号代替
+            // 引用嵌套处理1：多重引用嵌套，用引号代替
             do
             {
                 HtmlNode blockQuoteRepeatNode = doc.DocumentNode
@@ -1535,7 +1527,7 @@ namespace FullPlatformPublisher
                 }
             } while (true);
 
-            // 区块引用处理：全部改成头条模式的区块引用，去除多余标签
+            // 引用处理：全部改成头条模式的引用，去除多余标签
             // TODO：三种模式安排上
             var blockQuoteNodes = doc.DocumentNode
             .SelectNodes("//blockquote");
@@ -1553,18 +1545,46 @@ namespace FullPlatformPublisher
                 }
             }
 
-            // 区块嵌套处理2：如果引用里面有列表，则劈开引用
+            // 引用嵌套处理2：引用图片嵌套，则劈开引用
+            do
+            {
+                HtmlNode blockQuoteImageNode = doc.DocumentNode
+                    .SelectSingleNode("//blockquote/img");
+                if (blockQuoteImageNode != null)
+                {
+                    blockQuoteImageNode.Attributes.Add("POSITION", "");
+                    HtmlNode ancestorNode = blockQuoteImageNode.ParentNode.ParentNode;
+                    HtmlNode parentNode = blockQuoteImageNode.ParentNode;
+                    string[] temp = parentNode.InnerHtml.Split(blockQuoteImageNode.OuterHtml);
+                    blockQuoteImageNode.Attributes.Remove("POSITION");
+                    ancestorNode.InsertBefore(HtmlNode
+                        .CreateNode("<blockquote class=\"pgc-blockquote-quote\">"
+                        + temp[0] + "</blockquote>"), parentNode);
+                    ancestorNode.InsertBefore(HtmlNode
+                        .CreateNode(blockQuoteImageNode.OuterHtml), parentNode);
+                    ancestorNode.InsertBefore(HtmlNode
+                        .CreateNode("<blockquote class=\"pgc-blockquote-quote\">"
+                        + temp[1] + "</blockquote>"), parentNode);
+                    parentNode.Remove();
+                }
+                else
+                {
+                    break;
+                }
+            } while (true);
+
+            // 引用嵌套处理3：引用列表嵌套，则劈开引用
             do
             {
                 HtmlNode blockQuoteListNode = doc.DocumentNode
                     .SelectSingleNode("//blockquote/ol | //blockquote/ul");
                 if (blockQuoteListNode != null)
                 {
-                    blockQuoteListNode.Attributes.Add("Pos", "");
+                    blockQuoteListNode.Attributes.Add("POSITION", "");
                     HtmlNode ancestorNode = blockQuoteListNode.ParentNode.ParentNode;
                     HtmlNode parentNode = blockQuoteListNode.ParentNode;
                     string[] temp = parentNode.InnerHtml.Split(blockQuoteListNode.OuterHtml);
-                    blockQuoteListNode.Attributes.Remove("Pos");
+                    blockQuoteListNode.Attributes.Remove("POSITION");
                     ancestorNode.InsertBefore(HtmlNode
                         .CreateNode("<blockquote class=\"pgc-blockquote-quote\">"
                         + temp[0] + "</blockquote>"), parentNode);
@@ -1580,6 +1600,22 @@ namespace FullPlatformPublisher
                     break;
                 }
             } while (true);
+
+            // 引用多余处理：清理所有多余引用
+            var blockQuoteDestroyNodes = doc.DocumentNode
+                .SelectNodes("//blockquote");
+            if (blockQuoteDestroyNodes != null)
+            {
+                foreach (HtmlNode node in blockQuoteDestroyNodes)
+                {
+                    if (node.GetAttributeValue("class", "").Equals("pgc-blockquote-quote")
+                        && (node.InnerHtml.Replace("<br>","").Equals("")
+                        || node.InnerHtml.Replace("<br>","").Equals("<p></p>")))
+                    {
+                        node.Remove();
+                    }
+                }
+            }
 
             // 代码块处理：将单行代码块变成高亮
             // TODO：多行代码行到编辑器里会多一行
@@ -1924,11 +1960,13 @@ namespace FullPlatformPublisher
                 }
             }
 
-            // 嵌套列表处理：暂不做处理
+            // 列表处理：暂不做处理
 
-            // 区块引用处理：暂不做处理
+            // 列表嵌套处理：暂不做处理
 
-            // 区块嵌套处理：暂不做处理
+            // 引用处理：暂不做处理
+
+            // 引用嵌套处理：暂不做处理
 
             // 代码块处理：将单行代码块变成网址蓝色，将多行代码变成引用块
             var codeBlockNodes = doc.DocumentNode
