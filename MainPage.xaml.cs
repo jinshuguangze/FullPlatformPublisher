@@ -26,7 +26,7 @@ using Windows.Web.Http;
 
 // TODO：
 // 为全平台做steam的header图的爬取
-// 修改逻辑，全部绑定字段一次性变成hash+i的模式
+// 今日头条BUG：无序列表/有序列表中有图片出错，引用换行不分段。
 // 有可能的截图bmp文件出错无法读取
 // 有可能的视频爬取
 // 新建文件功能
@@ -34,6 +34,7 @@ using Windows.Web.Http;
 // 资源视图的更新，快点刷新
 // gif截取器，压缩器
 // 自建服务器站点以增快上传速度
+// 点击同样的文章（更新过了），但html不会自动更新
 
 namespace FullPlatformPublisher
 {
@@ -175,7 +176,7 @@ namespace FullPlatformPublisher
                 foreach (string mdImagePath in mdImagePathArray)
                 {
                     i++;
-                    System.Diagnostics.Debug.WriteLine("正在处理：第"+i+"张图片...");
+                    System.Diagnostics.Debug.WriteLine("正在处理：第" + i + "张图片...");
                     int linkedIndex = -1;
                     bool toProcess = true;
                     StorageFile processedImageFile = null;
@@ -667,7 +668,7 @@ namespace FullPlatformPublisher
                             note = "如果您觉得文章不错，就点个赞吧！";
                         }
                         // 默认字体大小为短边的一半，如果超过上限，则每次字号减小1%再检验
-                        float fontSize = (float)((logoLength < textLength) ? (logoLength) : (textLength));
+                        float fontSize = (float)((logoLength < textLength) ? (logoLength * 2.0 / 3.0) : (textLength * 2.0 / 3.0));
                         while (Math.Floor(logoLength / fontSize) * Math.Floor(textLength / fontSize) < note.Length)
                         {
                             fontSize *= 0.99f;
@@ -1312,7 +1313,7 @@ namespace FullPlatformPublisher
             }
 
             // 嵌套列表处理：同类嵌套时顺序改变，非同类嵌套时变为同类嵌套
-            // 里面有引用嵌套的全部使用引号和文字代替，列表全部进行去回车整合
+            // 里面有引用嵌套的全部使用引号和文字代替，图片嵌套直接提取出来，列表全部进行去回车整合
             var listNodes = doc.DocumentNode
                     .SelectNodes("//ol | //ul");
             if (listNodes != null)
@@ -1344,6 +1345,108 @@ namespace FullPlatformPublisher
                         .Replace("\n", "");
                 }
             }
+
+            do
+            {
+                HtmlNode listImageNode = doc.DocumentNode
+                    .SelectSingleNode("//li/p/img | //li/img");
+                if (listImageNode != null)
+                {
+                    string prefix;
+                    string suffix;
+                    HtmlNode fatherListNode;
+                    HtmlNode botherListNode;
+                    if (listImageNode.ParentNode.Name == "li")
+                    {
+                        fatherListNode = listImageNode.ParentNode.ParentNode.ParentNode;
+                        botherListNode = listImageNode.ParentNode.ParentNode;
+                        prefix = "<" + botherListNode.Name + ">";
+                        suffix = "</" + botherListNode.Name + ">";
+                        if (listImageNode.ParentNode.InnerHtml.Replace("<br>", "").Equals(listImageNode.OuterHtml.Replace("<br>", "")))
+                        {
+                            botherListNode.RemoveChild(listImageNode.ParentNode, true);
+                        }
+                        else
+                        {
+                            prefix = prefix + "<li>";
+                            suffix = "</li>" + suffix;
+                        }
+                    }
+                    else
+                    {
+                        fatherListNode = listImageNode.ParentNode.ParentNode.ParentNode.ParentNode;
+                        botherListNode = listImageNode.ParentNode.ParentNode.ParentNode;
+                        prefix = "<" + botherListNode.Name + ">";
+                        suffix = "</" + botherListNode.Name + ">";
+                        if (listImageNode.ParentNode.InnerHtml.Replace("<br>", "").Equals(listImageNode.OuterHtml.Replace("<br>", ""))
+                            && listImageNode.ParentNode.ParentNode.InnerHtml.Equals(listImageNode.ParentNode.OuterHtml))
+                        {
+                            HtmlNode tempNode = listImageNode.Clone();
+                            botherListNode.InsertBefore(tempNode, listImageNode.ParentNode.ParentNode);
+                            botherListNode.RemoveChild(listImageNode.ParentNode.ParentNode);
+                            listImageNode = tempNode;
+                        }
+                        else
+                        {
+                            prefix = prefix + "<li><p>";
+                            suffix = "</p></li>" + suffix;
+                        }
+                    }
+                    listImageNode.ParentNode.InsertBefore(HtmlNode.CreateNode("<div temp=\"\"></div>"), listImageNode);
+                    listImageNode.ParentNode.InsertAfter(HtmlNode.CreateNode("<div temp=\"\"></div>"), listImageNode);
+                    string listBeforeNodeString = botherListNode.OuterHtml.Substring(0, botherListNode.OuterHtml.IndexOf("<div temp=\"\"></div>"));
+                    string listAfterNodeString = botherListNode.OuterHtml.Substring(botherListNode.OuterHtml.LastIndexOf("<div temp=\"\"></div>") + 19);
+
+                    if (listBeforeNodeString.EndsWith("<br>"))
+                    {
+                        listBeforeNodeString = listBeforeNodeString.Substring(0, listBeforeNodeString.Length - 4);
+                    }
+                    if (listBeforeNodeString.EndsWith("<p>"))
+                    {
+                        listBeforeNodeString = listBeforeNodeString.Substring(0, listBeforeNodeString.Length - 3);
+                        suffix.Replace("</p>", "");
+                    }
+                    if (listBeforeNodeString.EndsWith("<li>"))
+                    {
+                        listBeforeNodeString = listBeforeNodeString.Substring(0, listBeforeNodeString.Length - 4);
+                        suffix.Replace("</li>", "");
+                    }
+                    if (listBeforeNodeString.EndsWith("<" + botherListNode.Name + ">"))
+                    {
+                        listBeforeNodeString = listBeforeNodeString.Substring(0, listBeforeNodeString.Length - 4);
+                        suffix.Replace("</" + botherListNode.Name + ">", "");
+                    }
+
+                    if (listAfterNodeString.StartsWith("<br>"))
+                    {
+                        listAfterNodeString = listAfterNodeString.Substring(0, listAfterNodeString.Length - 4);
+                    }
+                    if (listAfterNodeString.StartsWith("</p>"))
+                    {
+                        listAfterNodeString = listAfterNodeString.Substring(0, listAfterNodeString.Length - 3);
+                        prefix.Replace("<p>", "");
+                    }
+                    if (listAfterNodeString.StartsWith("</li>"))
+                    {
+                        listAfterNodeString = listAfterNodeString.Substring(0, listAfterNodeString.Length - 4);
+                        prefix.Replace("<li>", "");
+                    }
+                    if (listAfterNodeString.StartsWith("</" + botherListNode.Name + ">"))
+                    {
+                        listAfterNodeString = listAfterNodeString.Substring(0, listAfterNodeString.Length - 4);
+                        prefix.Replace("<" + botherListNode.Name + ">", "");
+                    }
+
+                    fatherListNode.InsertBefore(HtmlNode.CreateNode(listBeforeNodeString + suffix), botherListNode);
+                    fatherListNode.InsertBefore(listImageNode.Clone(), botherListNode);
+                    fatherListNode.InsertBefore(HtmlNode.CreateNode(prefix + listAfterNodeString), botherListNode);
+                    fatherListNode.RemoveChild(botherListNode);
+                }
+                else
+                {
+                    break;
+                }
+            } while (true);
 
             do
             {
@@ -1409,6 +1512,7 @@ namespace FullPlatformPublisher
                 }
             }
 
+
             // 区块嵌套处理1：用引号代替
             do
             {
@@ -1449,7 +1553,7 @@ namespace FullPlatformPublisher
                 }
             }
 
-            // 区块嵌套处理2：如果里面有列表，则劈开引用
+            // 区块嵌套处理2：如果引用里面有列表，则劈开引用
             do
             {
                 HtmlNode blockQuoteListNode = doc.DocumentNode
