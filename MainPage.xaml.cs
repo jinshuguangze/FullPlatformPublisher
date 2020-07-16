@@ -26,7 +26,6 @@ using Windows.Web.Http;
 
 // TODO：
 // 为全平台做steam的header图的爬取
-// 今日头条BUG：无序列表/有序列表中有图片出错，引用换行不分段。
 // 有可能的截图bmp文件出错无法读取
 // 有可能的视频爬取
 // 新建文件功能
@@ -34,7 +33,7 @@ using Windows.Web.Http;
 // 资源视图的更新，快点刷新
 // gif截取器，压缩器
 // 自建服务器站点以增快上传速度
-// 点击同样的文章（更新过了），但html不会自动更新
+// 解决点击md文件刷新后再次点击会将TheOpenedFile.LinkedMdFile替换成TheOpenedFile.LinkedHtmlFile的BUG
 
 namespace FullPlatformPublisher
 {
@@ -1374,7 +1373,7 @@ namespace FullPlatformPublisher
 
                     listImageNode.Attributes.Add("POSITION", "");
                     string listBeforeNodeString = botherListNode.OuterHtml.Split(listImageNode.OuterHtml)[0];
-                    string listAfterNodeString= botherListNode.OuterHtml.Split(listImageNode.OuterHtml)[1];
+                    string listAfterNodeString = botherListNode.OuterHtml.Split(listImageNode.OuterHtml)[1];
                     listImageNode.Attributes.Remove("POSITION");
 
                     if (listBeforeNodeString.EndsWith("<br>"))
@@ -1496,12 +1495,13 @@ namespace FullPlatformPublisher
             {
                 foreach (HtmlNode node in listDestroyNodes)
                 {
-                    node.Attributes.RemoveAll();
                     if (node.InnerHtml.Replace("<br>", "").Equals("")
                         || node.InnerHtml.Replace("<br>", "").Equals("<p></p>"))
                     {
                         node.Remove();
+                        continue;
                     }
+                    node.Attributes.RemoveAll();
                 }
             }
 
@@ -1539,8 +1539,6 @@ namespace FullPlatformPublisher
                     node.InnerHtml = node.InnerHtml
                         .Replace("<div>", "")
                         .Replace("</div>", "")
-                        .Replace("<p>", "")
-                        .Replace("</p>", "")
                         .Replace("\n", "");
                 }
             }
@@ -1608,11 +1606,15 @@ namespace FullPlatformPublisher
             {
                 foreach (HtmlNode node in blockQuoteDestroyNodes)
                 {
-                    if (node.GetAttributeValue("class", "").Equals("pgc-blockquote-quote")
-                        && (node.InnerHtml.Replace("<br>","").Equals("")
-                        || node.InnerHtml.Replace("<br>","").Equals("<p></p>")))
+                    if (node.GetAttributeValue("class", "").Equals("pgc-blockquote-quote"))
                     {
-                        node.Remove();
+                        if (node.InnerHtml.Replace("<br>", "").Equals("")
+                            || node.InnerHtml.Replace("<br>", "").Equals("<p></p>"))
+                        {
+                            node.Remove();
+                            continue;
+                        }
+                        node.InnerHtml = node.InnerHtml.Replace("</p><p>", "</p><p><br></p><p>");
                     }
                 }
             }
@@ -2172,9 +2174,6 @@ namespace FullPlatformPublisher
                         // 图片文件的双击事件
                         if (Array.Exists<string>(SupportImageTypes, s => s.Equals("." + fileType)))
                         {
-                            // 清空打开文件对象
-                            TheOpenedFile = new OpenedFile();
-
                             // 视图显示图片文件
                             try
                             {
@@ -2192,62 +2191,63 @@ namespace FullPlatformPublisher
                         // 其他文件的双击事件
                         else
                         {
-                            if (TheOpenedFile.LinkedMdFile != null && TheOpenedFile.LinkedHtmlFile != null
-                                && (file.Path.Equals(TheOpenedFile.LinkedMdFile.Path) || file.Path.Equals(TheOpenedFile.LinkedHtmlFile.Path)))
+                            if (!(TheOpenedFile.LinkedMdFile != null && TheOpenedFile.LinkedHtmlFile != null
+                                && (file.Path.Equals(TheOpenedFile.LinkedMdFile.Path) || file.Path.Equals(TheOpenedFile.LinkedHtmlFile.Path))))
                             {
-                                // 视图统一显示html的文件
-                                file = TheOpenedFile.LinkedHtmlFile;
+                                // TODO:当今版本有未知bug：当点击md文件后使用刷新再次点击相同的md文件时
+                                // ，TheOpenedFile.LinkedMdFile属性会发生改变为它的html文件
+                                if (!(TheOpenedFile.LinkedMdFile != null && TheOpenedFile.LinkedHtmlFile != null
+                                    && file.Path.Substring(0, file.Path.LastIndexOf("."))
+                                    .Equals(TheOpenedFile.LinkedHtmlFile.Path.Substring(0, TheOpenedFile.LinkedHtmlFile.Path.LastIndexOf(".")))))
+                                {
+                                    // 清空打开文件对象
+                                    TheOpenedFile = new OpenedFile();
+                                }
                             }
-                            else
+                            // 进行双向绑定
+                            StorageFile linkedMdFile = null;
+                            StorageFile linkedHtmlFile = null;
+                            if (fileType.Equals("md"))
                             {
-                                // 清空打开文件对象
-                                TheOpenedFile = new OpenedFile();
-
-                                // 进行双向绑定
-                                StorageFile linkedMdFile = null;
-                                StorageFile linkedHtmlFile = null;
-                                if (fileType.Equals("md"))
+                                linkedMdFile = file;
+                                try
                                 {
-                                    linkedMdFile = file;
-                                    try
-                                    {
-                                        linkedHtmlFile = await (await file.GetParentAsync())
-                                            .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf('.')) + ".html");
-                                    }
-                                    catch (FileNotFoundException fnfe)
-                                    {
-                                        System.Diagnostics.Debug.WriteLine(fnfe);
-                                        System.Diagnostics.Debug.WriteLine("文件" + file.Name + "的对应html文件缺失，路径为：" + file.Path);
-                                        return;
-                                    }
+                                    linkedHtmlFile = await (await file.GetParentAsync())
+                                        .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf('.')) + ".html");
                                 }
-                                else if (fileType.Equals("html"))
+                                catch (FileNotFoundException fnfe)
                                 {
-                                    linkedHtmlFile = file;
-                                    try
-                                    {
-                                        linkedMdFile = await (await file.GetParentAsync())
-                                            .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf('.')) + ".md");
-                                    }
-                                    catch (FileNotFoundException fnfe)
-                                    {
-                                        System.Diagnostics.Debug.WriteLine(fnfe);
-                                        System.Diagnostics.Debug.WriteLine("文件" + file.Name + "的对应md文件缺失，路径为：" + file.Path);
-                                        return;
-                                    }
+                                    System.Diagnostics.Debug.WriteLine(fnfe);
+                                    System.Diagnostics.Debug.WriteLine("文件" + file.Name + "的对应html文件缺失，路径为：" + file.Path);
+                                    return;
                                 }
-
-                                // 如果双向绑定成功
-                                if (linkedMdFile != null && linkedHtmlFile != null)
+                            }
+                            else if (fileType.Equals("html"))
+                            {
+                                linkedHtmlFile = file;
+                                try
                                 {
-                                    // 存储已打开文件对象
-                                    TheOpenedFile.LinkedMdFile = linkedMdFile;
-                                    TheOpenedFile.LinkedHtmlFile = linkedHtmlFile;
-                                    TheOpenedFile.Html = htmlPreprocessing(await FileIO.ReadTextAsync(linkedHtmlFile));
-
-                                    // 视图统一显示html的文件
-                                    file = linkedHtmlFile;
+                                    linkedMdFile = await (await file.GetParentAsync())
+                                        .GetFileAsync(file.Name.Substring(0, file.Name.LastIndexOf('.')) + ".md");
                                 }
+                                catch (FileNotFoundException fnfe)
+                                {
+                                    System.Diagnostics.Debug.WriteLine(fnfe);
+                                    System.Diagnostics.Debug.WriteLine("文件" + file.Name + "的对应md文件缺失，路径为：" + file.Path);
+                                    return;
+                                }
+                            }
+
+                            // 如果双向绑定成功
+                            if (linkedMdFile != null && linkedHtmlFile != null)
+                            {
+                                // 存储已打开文件对象
+                                TheOpenedFile.LinkedMdFile = linkedMdFile;
+                                TheOpenedFile.LinkedHtmlFile = linkedHtmlFile;
+                                TheOpenedFile.Html = htmlPreprocessing(await FileIO.ReadTextAsync(linkedHtmlFile));
+
+                                // 视图统一显示html的文件
+                                file = linkedHtmlFile;
                             }
 
                             // 视图显示其他文件
