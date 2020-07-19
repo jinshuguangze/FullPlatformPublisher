@@ -33,6 +33,9 @@ using Windows.Web.Http;
 // 资源视图的更新，快点刷新
 // gif截取器，压缩器
 // 自建服务器站点以增快上传速度
+// 引用不使用隔行，而是用空格
+// 删除空引用，包括<br>
+// 有序列表在被图片劈开时，能不能续序号
 // 解决点击md文件刷新后再次点击会将TheOpenedFile.LinkedMdFile替换成TheOpenedFile.LinkedHtmlFile的BUG
 
 namespace FullPlatformPublisher
@@ -1356,6 +1359,7 @@ namespace FullPlatformPublisher
                     string suffix;
                     HtmlNode fatherListNode;
                     HtmlNode botherListNode;
+                    bool isMiddle = true;
                     if (listImageNode.ParentNode.Name.Equals("li"))
                     {
                         fatherListNode = listImageNode.ParentNode.ParentNode.ParentNode;
@@ -1384,11 +1388,17 @@ namespace FullPlatformPublisher
                     {
                         listBeforeNodeString = listBeforeNodeString.Substring(0, listBeforeNodeString.Length - 3);
                         suffix = suffix.Replace("</p>", "");
+                        isMiddle = false;
                     }
                     if (listBeforeNodeString.EndsWith("<li>"))
                     {
                         listBeforeNodeString = listBeforeNodeString.Substring(0, listBeforeNodeString.Length - 4);
                         suffix = suffix.Replace("</li>", "");
+                        isMiddle = false;
+                    }
+                    if (listBeforeNodeString.EndsWith("</ol>") || listBeforeNodeString.EndsWith("</ul>"))
+                    {
+                        isMiddle = false;
                     }
                     if (listBeforeNodeString.EndsWith("<" + botherListNode.Name + ">"))
                     {
@@ -1404,16 +1414,56 @@ namespace FullPlatformPublisher
                     {
                         listAfterNodeString = listAfterNodeString.Substring(4);
                         prefix = prefix.Replace("<p>", "");
+                        isMiddle = false;
                     }
                     if (listAfterNodeString.StartsWith("</li>"))
                     {
                         listAfterNodeString = listAfterNodeString.Substring(5);
                         prefix = prefix.Replace("<li>", "");
+                        isMiddle = false;
+                    }
+                    if (listAfterNodeString.StartsWith("<ol>") || listAfterNodeString.StartsWith("<ul>"))
+                    {
+                        isMiddle = false;
                     }
                     if (listAfterNodeString.StartsWith("</" + botherListNode.Name + ">"))
                     {
                         listAfterNodeString = listAfterNodeString.Substring(5);
                         prefix = prefix.Replace("<" + botherListNode.Name + ">", "");
+                    }
+
+                    if (isMiddle)
+                    {
+                        int beforeTextIndex = listBeforeNodeString.LastIndexOf("<" + listImageNode.ParentNode.Name + ">");
+                        string beforeHtml = listBeforeNodeString.Substring(0, beforeTextIndex+listImageNode.ParentNode.Name.Length + 2);
+                        string beforeText = listBeforeNodeString.Substring(beforeTextIndex + listImageNode.ParentNode.Name.Length + 2);
+
+                        int afterTextIndex = listAfterNodeString.IndexOf("</" + listImageNode.ParentNode.Name + ">");
+                        string afterText = listAfterNodeString.Substring(0, afterTextIndex);
+                        string afterHtml = listAfterNodeString.Substring(afterTextIndex);
+
+                        listBeforeNodeString = beforeHtml + beforeText + "<strong class=\"highlight-text\">【见下图】</strong>" + afterText;
+                        listAfterNodeString = afterHtml;
+
+                        if (listAfterNodeString.StartsWith("<br>"))
+                        {
+                            listAfterNodeString = listAfterNodeString.Substring(4);
+                        }
+                        if (listAfterNodeString.StartsWith("</p>"))
+                        {
+                            listAfterNodeString = listAfterNodeString.Substring(4);
+                            prefix = prefix.Replace("<p>", "");
+                        }
+                        if (listAfterNodeString.StartsWith("</li>"))
+                        {
+                            listAfterNodeString = listAfterNodeString.Substring(5);
+                            prefix = prefix.Replace("<li>", "");
+                        }
+                        if (listAfterNodeString.StartsWith("</" + botherListNode.Name + ">"))
+                        {
+                            listAfterNodeString = listAfterNodeString.Substring(5);
+                            prefix = prefix.Replace("<" + botherListNode.Name + ">", "");
+                        }
                     }
 
                     if (!(listBeforeNodeString + suffix).Equals(""))
