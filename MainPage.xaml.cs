@@ -36,7 +36,7 @@ using Windows.Web.Http;
 // 自建服务器站点以增快上传速度
 // 引用不使用隔行，而是用空格
 // 删除空引用，包括<br>
-// 有序列表在被图片劈开时，能不能续序号
+// 有序列表在被图片劈开时，能不能续序号(目前还有bug，见测试用例尾部)
 // 解决点击md文件刷新后再次点击会将TheOpenedFile.LinkedMdFile替换成TheOpenedFile.LinkedHtmlFile的BUG
 
 namespace FullPlatformPublisher
@@ -1379,19 +1379,19 @@ namespace FullPlatformPublisher
                         suffix = "</p></li></" + brotherListNode.Name + ">";
                     }
 
-                    System.Diagnostics.Debug.WriteLine(brotherListNode.Name);
+                    //System.Diagnostics.Debug.WriteLine(doc.DocumentNode.SelectSingleNode("div").OuterHtml);
 
-                    int serial = brotherListNode.GetAttributeValue("start", 0);
+                    int serial = brotherListNode.GetAttributeValue("start", 1);
                     var childrenNodes = brotherListNode.ChildNodes;
                     if (childrenNodes != null)
                     {
                         foreach (HtmlNode node in childrenNodes)
                         {
-                            serial++;
                             if (node.Equals(cousinListNode))
                             {
                                 break;
                             }
+                            serial++;
                         }
                     }
 
@@ -1449,8 +1449,7 @@ namespace FullPlatformPublisher
                         prefix = prefix.Replace("<li>", "");
                         isMiddle = false;
                     }
-                    if (listAfterNodeString.StartsWith("<ol>") || listAfterNodeString.StartsWith("<ul>")
-                        || listAfterNodeString.StartsWith("<ol start=") || listAfterNodeString.StartsWith("<ul start="))
+                    if (listAfterNodeString.StartsWith("<ol>") || listAfterNodeString.StartsWith("<ul>"))
                     {
                         isMiddle = false;
                     }
@@ -1467,11 +1466,15 @@ namespace FullPlatformPublisher
 
                     if (isMiddle)
                     {
-                        int beforeTextIndex = listBeforeNodeString.LastIndexOf("<" + listImageNode.ParentNode.Name + ">");
-                        string beforeHtml = listBeforeNodeString.Substring(0, beforeTextIndex + listImageNode.ParentNode.Name.Length + 2);
-                        string beforeText = listBeforeNodeString.Substring(beforeTextIndex + listImageNode.ParentNode.Name.Length + 2);
+                        int beforeTextIndex = Math.Max(listBeforeNodeString.LastIndexOf("<" + listImageNode.ParentNode.Name + ">")
+                            , Math.Max(listBeforeNodeString.LastIndexOf("</ol>"), listBeforeNodeString.LastIndexOf("</ul>")));
+                        string beforeHtml = listBeforeNodeString.Substring(0, beforeTextIndex + (listImageNode.ParentNode.Name.Equals("p") ? 3 : 4));
+                        string beforeText = listBeforeNodeString.Substring(beforeTextIndex + (listImageNode.ParentNode.Name.Equals("p") ? 3 : 4));
 
-                        int afterTextIndex = listAfterNodeString.IndexOf("</" + listImageNode.ParentNode.Name + ">");
+                        int afterTextIndex = Math.Min(listAfterNodeString.IndexOf("</" + listImageNode.ParentNode.Name + ">")
+                            , Math.Min((matchAfter.Success ? matchAfter.Index : int.MaxValue)
+                            , Math.Min((listAfterNodeString.Contains("<ol>") ? listAfterNodeString.IndexOf("<ol>") : int.MaxValue)
+                            , (listAfterNodeString.Contains("<ul>") ? listAfterNodeString.IndexOf("<ul>") : int.MaxValue))));
                         string afterText = listAfterNodeString.Substring(0, afterTextIndex);
                         string afterHtml = listAfterNodeString.Substring(afterTextIndex);
 
