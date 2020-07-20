@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.RegularExpressions;
@@ -1313,11 +1314,11 @@ namespace FullPlatformPublisher
                 }
             }
 
-            // 列表处理：暂不做处理
+            // 列表处理：暂不处理
 
             // 列表嵌套处理1：列表引用嵌套全部使用引号和文字代替
             var listNodes = doc.DocumentNode
-                    .SelectNodes("//ol | //ul");
+                .SelectNodes("//ol | //ul");
             if (listNodes != null)
             {
                 foreach (HtmlNode node in listNodes)
@@ -1358,26 +1359,45 @@ namespace FullPlatformPublisher
                     string prefix;
                     string suffix;
                     HtmlNode fatherListNode;
-                    HtmlNode botherListNode;
+                    HtmlNode brotherListNode;
+                    HtmlNode cousinListNode;
                     bool isMiddle = true;
                     if (listImageNode.ParentNode.Name.Equals("li"))
                     {
                         fatherListNode = listImageNode.ParentNode.ParentNode.ParentNode;
-                        botherListNode = listImageNode.ParentNode.ParentNode;
-                        prefix = "<" + botherListNode.Name + "><li>";
-                        suffix = "</li></" + botherListNode.Name + ">";
+                        brotherListNode = listImageNode.ParentNode.ParentNode;
+                        cousinListNode = listImageNode.ParentNode;
+                        prefix = "<" + brotherListNode.Name + "><li>";
+                        suffix = "</li></" + brotherListNode.Name + ">";
                     }
                     else
                     {
                         fatherListNode = listImageNode.ParentNode.ParentNode.ParentNode.ParentNode;
-                        botherListNode = listImageNode.ParentNode.ParentNode.ParentNode;
-                        prefix = "<" + botherListNode.Name + "><li><p>";
-                        suffix = "</p></li></" + botherListNode.Name + ">";
+                        brotherListNode = listImageNode.ParentNode.ParentNode.ParentNode;
+                        cousinListNode = listImageNode.ParentNode.ParentNode;
+                        prefix = "<" + brotherListNode.Name + "><li><p>";
+                        suffix = "</p></li></" + brotherListNode.Name + ">";
+                    }
+
+                    System.Diagnostics.Debug.WriteLine(brotherListNode.Name);
+
+                    int serial = brotherListNode.GetAttributeValue("start", 0);
+                    var childrenNodes = brotherListNode.ChildNodes;
+                    if (childrenNodes != null)
+                    {
+                        foreach (HtmlNode node in childrenNodes)
+                        {
+                            serial++;
+                            if (node.Equals(cousinListNode))
+                            {
+                                break;
+                            }
+                        }
                     }
 
                     listImageNode.Attributes.Add("POSITION", "");
-                    string listBeforeNodeString = botherListNode.OuterHtml.Split(listImageNode.OuterHtml)[0];
-                    string listAfterNodeString = botherListNode.OuterHtml.Split(listImageNode.OuterHtml)[1];
+                    string listBeforeNodeString = brotherListNode.OuterHtml.Split(listImageNode.OuterHtml)[0];
+                    string listAfterNodeString = brotherListNode.OuterHtml.Split(listImageNode.OuterHtml)[1];
                     listImageNode.Attributes.Remove("POSITION");
 
                     if (listBeforeNodeString.EndsWith("<br>"))
@@ -1394,16 +1414,23 @@ namespace FullPlatformPublisher
                     {
                         listBeforeNodeString = listBeforeNodeString.Substring(0, listBeforeNodeString.Length - 4);
                         suffix = suffix.Replace("</li>", "");
+                        serial--;
                         isMiddle = false;
                     }
                     if (listBeforeNodeString.EndsWith("</ol>") || listBeforeNodeString.EndsWith("</ul>"))
                     {
                         isMiddle = false;
                     }
-                    if (listBeforeNodeString.EndsWith("<" + botherListNode.Name + ">"))
+                    if (listBeforeNodeString.EndsWith("<" + brotherListNode.Name + ">"))
                     {
                         listBeforeNodeString = listBeforeNodeString.Substring(0, listBeforeNodeString.Length - 4);
-                        suffix = suffix.Replace("</" + botherListNode.Name + ">", "");
+                        suffix = suffix.Replace("</" + brotherListNode.Name + ">", "");
+                    }
+                    Match matchBefore = Regex.Match(listBeforeNodeString, "<" + brotherListNode.Name + " start=\"[0-9]+\">", RegexOptions.RightToLeft);
+                    if (matchBefore.Success && matchBefore.Index == listBeforeNodeString.Length - matchBefore.Length)
+                    {
+                        listBeforeNodeString = listBeforeNodeString.Substring(0, listBeforeNodeString.Length - matchBefore.Length);
+                        suffix = suffix.Replace("</" + brotherListNode.Name + ">", "");
                     }
 
                     if (listAfterNodeString.StartsWith("<br>"))
@@ -1422,20 +1449,26 @@ namespace FullPlatformPublisher
                         prefix = prefix.Replace("<li>", "");
                         isMiddle = false;
                     }
-                    if (listAfterNodeString.StartsWith("<ol>") || listAfterNodeString.StartsWith("<ul>"))
+                    if (listAfterNodeString.StartsWith("<ol>") || listAfterNodeString.StartsWith("<ul>")
+                        || listAfterNodeString.StartsWith("<ol start=") || listAfterNodeString.StartsWith("<ul start="))
                     {
                         isMiddle = false;
                     }
-                    if (listAfterNodeString.StartsWith("</" + botherListNode.Name + ">"))
+                    Match matchAfter = Regex.Match(listAfterNodeString, "<(ol|ul) start=\"[0-9]+\">");
+                    if (matchAfter.Success && matchAfter.Index == 0)
+                    {
+                        isMiddle = false;
+                    }
+                    if (listAfterNodeString.StartsWith("</" + brotherListNode.Name + ">"))
                     {
                         listAfterNodeString = listAfterNodeString.Substring(5);
-                        prefix = prefix.Replace("<" + botherListNode.Name + ">", "");
+                        prefix = prefix.Replace("<" + brotherListNode.Name + ">", "");
                     }
 
                     if (isMiddle)
                     {
                         int beforeTextIndex = listBeforeNodeString.LastIndexOf("<" + listImageNode.ParentNode.Name + ">");
-                        string beforeHtml = listBeforeNodeString.Substring(0, beforeTextIndex+listImageNode.ParentNode.Name.Length + 2);
+                        string beforeHtml = listBeforeNodeString.Substring(0, beforeTextIndex + listImageNode.ParentNode.Name.Length + 2);
                         string beforeText = listBeforeNodeString.Substring(beforeTextIndex + listImageNode.ParentNode.Name.Length + 2);
 
                         int afterTextIndex = listAfterNodeString.IndexOf("</" + listImageNode.ParentNode.Name + ">");
@@ -1459,23 +1492,25 @@ namespace FullPlatformPublisher
                             listAfterNodeString = listAfterNodeString.Substring(5);
                             prefix = prefix.Replace("<li>", "");
                         }
-                        if (listAfterNodeString.StartsWith("</" + botherListNode.Name + ">"))
+                        if (listAfterNodeString.StartsWith("</" + brotherListNode.Name + ">"))
                         {
                             listAfterNodeString = listAfterNodeString.Substring(5);
-                            prefix = prefix.Replace("<" + botherListNode.Name + ">", "");
+                            prefix = prefix.Replace("<" + brotherListNode.Name + ">", "");
                         }
                     }
 
+                    prefix = prefix.Replace("<" + brotherListNode.Name + ">", "<" + brotherListNode.Name + " start=\"" + (serial + 1) + "\">");
+
                     if (!(listBeforeNodeString + suffix).Equals(""))
                     {
-                        fatherListNode.InsertBefore(HtmlNode.CreateNode(listBeforeNodeString + suffix), botherListNode);
+                        fatherListNode.InsertBefore(HtmlNode.CreateNode(listBeforeNodeString + suffix), brotherListNode);
                     }
-                    fatherListNode.InsertBefore(listImageNode.Clone(), botherListNode);
+                    fatherListNode.InsertBefore(listImageNode.Clone(), brotherListNode);
                     if (!(prefix + listAfterNodeString).Equals(""))
                     {
-                        fatherListNode.InsertBefore(HtmlNode.CreateNode(prefix + listAfterNodeString), botherListNode);
+                        fatherListNode.InsertBefore(HtmlNode.CreateNode(prefix + listAfterNodeString), brotherListNode);
                     }
-                    botherListNode.Remove();
+                    brotherListNode.Remove();
                 }
                 else
                 {
@@ -1510,12 +1545,14 @@ namespace FullPlatformPublisher
                     else if (listRepeatNode.Name.Equals("ol"))
                     {
                         listRepeatNode.Name = "ul";
+                        listRepeatNode.Attributes.RemoveAll();
                         var checkNodes = listRepeatNode.SelectNodes(".//ol");
                         if (checkNodes != null)
                         {
                             foreach (HtmlNode checkNode in checkNodes)
                             {
                                 checkNode.Name = "ul";
+                                checkNode.Attributes.RemoveAll();
                             }
                         }
                     }
