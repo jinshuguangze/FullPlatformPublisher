@@ -34,9 +34,8 @@ using Windows.Web.Http;
 // 资源视图的更新，快点刷新
 // gif截取器，压缩器
 // 自建服务器站点以增快上传速度
-// 引用不使用隔行，而是用空格
-// 删除空引用，包括<br>
-// 有序列表在被图片劈开时，能不能续序号(目前还有bug，见测试用例尾部)
+// 图片和列表与引用交互存在问题，未考虑<p>里面的情况
+// 今日头条的新交互，顺便也在小黑盒上试验下
 // 解决点击md文件刷新后再次点击会将TheOpenedFile.LinkedMdFile替换成TheOpenedFile.LinkedHtmlFile的BUG
 
 namespace FullPlatformPublisher
@@ -1165,7 +1164,8 @@ namespace FullPlatformPublisher
                 {
                     break;
                 }
-            } while (true);
+            }
+            while (true);
 
             // 删除线处理：如果文章中有删除线，则删除删除线，并在文字后面加（划掉）
             var strikeThroughNodes = doc.DocumentNode
@@ -1328,10 +1328,39 @@ namespace FullPlatformPublisher
                         HtmlNode listQuoteNode = node.SelectSingleNode(".//blockquote");
                         if (listQuoteNode != null)
                         {
-                            string temp = listQuoteNode.OuterHtml
-                                .Replace("<blockquote>", "<br>“")
-                                .Replace("</blockquote>", "”<br>")
-                                .Replace("<p>", "").Replace("</p>", "");
+                            if (listQuoteNode.InnerText.Replace("\n", "").Equals(""))
+                            {
+                                listQuoteNode.Remove();
+                                continue;
+                            }
+
+                            HtmlNode listQuoteParentNode = listQuoteNode.ParentNode;
+                            while (!listQuoteParentNode.Name.Equals("li"))
+                            {
+                                listQuoteParentNode = listQuoteParentNode.ParentNode;
+                            }
+                            listQuoteNode.Attributes.Add("POSITION", "");
+                            string listQuoteBeforeNodeString = listQuoteParentNode.InnerHtml.Split(listQuoteNode.OuterHtml)[0];
+                            string listQuoteAfterNodeString = listQuoteParentNode.InnerHtml.Split(listQuoteNode.OuterHtml)[1];
+                            listQuoteNode.Attributes.Remove("POSITION");
+
+                            string quoteSymbolBefore = "“";
+                            string quoteSymbolAfter = "”";
+                            if (((listQuoteBeforeNodeString.Contains("“") && !listQuoteBeforeNodeString.Contains("‘"))
+                                || (listQuoteBeforeNodeString.Contains("“") && listQuoteBeforeNodeString.Contains("‘")
+                                && listQuoteBeforeNodeString.IndexOf("“") > listQuoteBeforeNodeString.IndexOf("‘")))
+                                && ((listQuoteAfterNodeString.Contains("”") && !listQuoteAfterNodeString.Contains("’"))
+                                || (listQuoteAfterNodeString.Contains("”") && listQuoteAfterNodeString.Contains("’")
+                                && listQuoteAfterNodeString.LastIndexOf("”") < listQuoteAfterNodeString.LastIndexOf("’"))))
+                            {
+                                quoteSymbolBefore = "‘";
+                                quoteSymbolAfter = "’";
+                            }
+
+                            string temp = " <strong>" + quoteSymbolBefore + "</strong>"
+                                + listQuoteNode.InnerHtml.Replace("<p>", "").Replace("</p>", "")
+                                + "<strong>" + quoteSymbolAfter + "</strong> ";
+
                             temp = temp.Insert(0, "<div>");
                             temp = temp.Insert(temp.Length, "</div>");
                             listQuoteNode.ParentNode.InsertAfter(HtmlNode.CreateNode(temp), listQuoteNode);
@@ -1341,7 +1370,8 @@ namespace FullPlatformPublisher
                         {
                             break;
                         }
-                    } while (true);
+                    }
+                    while (true);
                     node.InnerHtml = node.InnerHtml
                         .Replace("<div>", "")
                         .Replace("</div>", "")
@@ -1562,7 +1592,8 @@ namespace FullPlatformPublisher
                 {
                     break;
                 }
-            } while (true);
+            }
+            while (true);
 
             // 列表嵌套处理3：多重列表嵌套，同类嵌套时顺序改变，非同类嵌套时变为同类嵌套
             do
@@ -1619,7 +1650,8 @@ namespace FullPlatformPublisher
                 {
                     break;
                 }
-            } while (true);
+            }
+            while (true);
 
             // 列表多余处理：清理所有多余列表
             var listDestroyNodes = doc.DocumentNode
@@ -1639,8 +1671,8 @@ namespace FullPlatformPublisher
                     {
                         // TODO
                     }
-                    else if (node.InnerHtml.Replace("<br>", "").Equals("")
-                        || node.InnerHtml.Replace("<br>", "").Equals("<p></p>"))
+                    else if (node.InnerHtml.Replace("<br>", "").Replace("\n", "").Equals("")
+                        || node.InnerHtml.Replace("<br>", "").Replace("\n", "").Equals("<p></p>"))
                     {
                         node.Remove();
                         continue;
@@ -1650,26 +1682,33 @@ namespace FullPlatformPublisher
             }
 
             // 引用嵌套处理1：多重引用嵌套，用引号代替
+            bool singleQuote = false;
             do
             {
                 HtmlNode blockQuoteRepeatNode = doc.DocumentNode
                 .SelectSingleNode("//blockquote/blockquote");
                 if (blockQuoteRepeatNode != null)
                 {
-                    string temp = blockQuoteRepeatNode.OuterHtml
-                        .Replace("<blockquote>", "<br>“")
-                        .Replace("</blockquote>", "”<br>")
-                        .Replace("<p>", "").Replace("</p>", "");
-                    temp = temp.Insert(0, "<div>");
-                    temp = temp.Insert(temp.Length, "</div>");
-                    blockQuoteRepeatNode.ParentNode.InsertAfter(HtmlNode.CreateNode(temp), blockQuoteRepeatNode);
-                    blockQuoteRepeatNode.Remove();
+                    string quoteSymbolBefore = singleQuote ? "「" : "『";
+                    string quoteSymbolAfter = singleQuote ? "」" : "』";
+                    singleQuote = !singleQuote;
+
+                    blockQuoteRepeatNode.InnerHtml = blockQuoteRepeatNode.InnerHtml
+                        .Insert(blockQuoteRepeatNode.InnerHtml.IndexOf("<p>") + 3, "<strong>" + quoteSymbolBefore + "</strong>");
+                    blockQuoteRepeatNode.InnerHtml = blockQuoteRepeatNode.InnerHtml
+                        .Insert(blockQuoteRepeatNode.InnerHtml.LastIndexOf("</p>"), "<strong>" + quoteSymbolAfter + "</strong>");
+                    blockQuoteRepeatNode.InnerHtml = blockQuoteRepeatNode.InnerHtml
+                        .Insert(blockQuoteRepeatNode.InnerHtml.IndexOf("<p>"), "<p><br></p>");
+                    blockQuoteRepeatNode.InnerHtml = blockQuoteRepeatNode.InnerHtml
+                        .Insert(blockQuoteRepeatNode.InnerHtml.LastIndexOf("</p>") + 4, "<p><br></p>");
+                    blockQuoteRepeatNode.ParentNode.RemoveChild(blockQuoteRepeatNode, true);
                 }
                 else
                 {
                     break;
                 }
-            } while (true);
+            }
+            while (true);
 
             // 引用处理：全部改成头条模式的引用，去除多余标签
             // TODO：三种模式安排上
@@ -1680,10 +1719,7 @@ namespace FullPlatformPublisher
                 foreach (HtmlNode node in blockQuoteNodes)
                 {
                     node.SetAttributeValue("class", "pgc-blockquote-quote");
-                    node.InnerHtml = node.InnerHtml
-                        .Replace("<div>", "")
-                        .Replace("</div>", "")
-                        .Replace("\n", "");
+                    node.InnerHtml = node.InnerHtml.Replace("\n", "");
                 }
             }
 
@@ -1713,7 +1749,8 @@ namespace FullPlatformPublisher
                 {
                     break;
                 }
-            } while (true);
+            }
+            while (true);
 
             // 引用嵌套处理3：引用列表嵌套，则劈开引用
             do
@@ -1741,7 +1778,8 @@ namespace FullPlatformPublisher
                 {
                     break;
                 }
-            } while (true);
+            }
+            while (true);
 
             // 引用多余处理：清理所有多余引用
             var blockQuoteDestroyNodes = doc.DocumentNode
@@ -1752,13 +1790,39 @@ namespace FullPlatformPublisher
                 {
                     if (node.GetAttributeValue("class", "").Equals("pgc-blockquote-quote"))
                     {
-                        if (node.InnerHtml.Replace("<br>", "").Equals("")
-                            || node.InnerHtml.Replace("<br>", "").Equals("<p></p>"))
+                        if (node.InnerText.Equals(""))
                         {
                             node.Remove();
                             continue;
                         }
-                        node.InnerHtml = node.InnerHtml.Replace("</p><p>", "</p><p><br></p><p>");
+
+                        var nodeChildren = node.ChildNodes;
+                        if (nodeChildren != null)
+                        {
+                            do
+                            {
+                                HtmlNode nodeChildClone = null;
+                                foreach (HtmlNode nodeChild in nodeChildren)
+                                {
+                                    if (nodeChild.Name.Equals("p") && !nodeChild.InnerHtml.Equals("<br>")
+                                        && nodeChild.NextSibling != null && nodeChild.NextSibling.Name.Equals("p")
+                                        && !nodeChild.NextSibling.InnerHtml.Equals("<br>"))
+                                    {
+                                        nodeChildClone = nodeChild;
+                                        break;
+                                    }
+                                }
+                                if (nodeChildClone != null)
+                                {
+                                    node.InsertAfter(HtmlNode.CreateNode("<p><br></p>"), nodeChildClone);
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                            while (true);
+                        }
                     }
                 }
             }
@@ -1978,7 +2042,8 @@ namespace FullPlatformPublisher
                 {
                     break;
                 }
-            } while (true);
+            }
+            while (true);
 
             var dividingNodes = doc.DocumentNode
                 .SelectNodes("//hr");
