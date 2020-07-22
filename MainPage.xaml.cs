@@ -1350,6 +1350,39 @@ namespace FullPlatformPublisher
             }
 
             // 列表嵌套处理2：列表图片嵌套直接提取出来
+            var listImageNodes = doc.DocumentNode
+                .SelectNodes("//li/p/img | //li/img");
+            if (listImageNodes != null)
+            {
+                foreach (HtmlNode listImageNode in listImageNodes)
+                {
+                    HtmlNode cloneList;
+                    if (listImageNode.ParentNode.Name.Equals("li"))
+                    {
+                        cloneList = listImageNode.ParentNode.Clone();
+                    }
+                    else
+                    {
+                        cloneList = listImageNode.ParentNode.ParentNode.Clone();
+                    }
+
+                    var cloneListChildren = cloneList.SelectNodes(".//ol | .//ul | .//br");
+                    if (cloneListChildren != null)
+                    {
+                        foreach (HtmlNode node in cloneListChildren)
+                        {
+                            node.Remove();
+                        }
+                    }
+
+                    if (listImageNode.ParentNode.Name.Equals("li") && cloneList.InnerHtml.Equals(listImageNode.OuterHtml)
+                        || (listImageNode.ParentNode.Name.Equals("p") && cloneList.InnerHtml.Equals("<p>" + listImageNode.OuterHtml + "</p>")))
+                    {
+                        listImageNode.ParentNode.InsertBefore(HtmlNode.CreateNode("<strong class=\"highlight-text\">【见下图】</strong>"), listImageNode);
+                    }
+                }
+            }
+
             do
             {
                 HtmlNode listImageNode = doc.DocumentNode
@@ -1361,7 +1394,9 @@ namespace FullPlatformPublisher
                     HtmlNode fatherListNode;
                     HtmlNode brotherListNode;
                     HtmlNode cousinListNode;
+                    bool isOverestimated = false;
                     bool isMiddle = true;
+
                     if (listImageNode.ParentNode.Name.Equals("li"))
                     {
                         fatherListNode = listImageNode.ParentNode.ParentNode.ParentNode;
@@ -1379,8 +1414,6 @@ namespace FullPlatformPublisher
                         suffix = "</p></li></" + brotherListNode.Name + ">";
                     }
 
-                    //System.Diagnostics.Debug.WriteLine(doc.DocumentNode.SelectSingleNode("div").OuterHtml);
-
                     int serial = brotherListNode.GetAttributeValue("start", 1);
                     var childrenNodes = brotherListNode.ChildNodes;
                     if (childrenNodes != null)
@@ -1391,7 +1424,10 @@ namespace FullPlatformPublisher
                             {
                                 break;
                             }
-                            serial++;
+                            if (!node.Name.Equals("img"))
+                            {
+                                serial++;
+                            }
                         }
                     }
 
@@ -1414,7 +1450,7 @@ namespace FullPlatformPublisher
                     {
                         listBeforeNodeString = listBeforeNodeString.Substring(0, listBeforeNodeString.Length - 4);
                         suffix = suffix.Replace("</li>", "");
-                        serial--;
+                        isOverestimated = true;
                         isMiddle = false;
                     }
                     if (listBeforeNodeString.EndsWith("</ol>") || listBeforeNodeString.EndsWith("</ul>"))
@@ -1451,17 +1487,24 @@ namespace FullPlatformPublisher
                     }
                     if (listAfterNodeString.StartsWith("<ol>") || listAfterNodeString.StartsWith("<ul>"))
                     {
+                        isOverestimated = true;
                         isMiddle = false;
                     }
                     Match matchAfter = Regex.Match(listAfterNodeString, "<(ol|ul) start=\"[0-9]+\">");
                     if (matchAfter.Success && matchAfter.Index == 0)
                     {
+                        isOverestimated = true;
                         isMiddle = false;
                     }
                     if (listAfterNodeString.StartsWith("</" + brotherListNode.Name + ">"))
                     {
                         listAfterNodeString = listAfterNodeString.Substring(5);
                         prefix = prefix.Replace("<" + brotherListNode.Name + ">", "");
+                    }
+
+                    if (isOverestimated)
+                    {
+                        serial--;
                     }
 
                     if (isMiddle)
@@ -1585,7 +1628,18 @@ namespace FullPlatformPublisher
             {
                 foreach (HtmlNode node in listDestroyNodes)
                 {
-                    if (node.InnerHtml.Replace("<br>", "").Equals("")
+                    if (node.InnerHtml.Equals("") && node.ParentNode.FirstChild.Equals(node)
+                        && node.NextSibling != null && node.NextSibling.Name.Equals("ol"))
+                    {
+                        node.ParentNode.SetAttributeValue("start", (node.ParentNode.GetAttributeValue("start", 0) + 1).ToString());
+                        node.Remove();
+                        continue;
+                    }
+                    else if (node.InnerHtml.Equals("") && node.NextSibling != null && (node.NextSibling.Name.Equals("ol") || node.NextSibling.Name.Equals("ul")))
+                    {
+                        // TODO
+                    }
+                    else if (node.InnerHtml.Replace("<br>", "").Equals("")
                         || node.InnerHtml.Replace("<br>", "").Equals("<p></p>"))
                     {
                         node.Remove();
