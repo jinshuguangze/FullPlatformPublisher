@@ -34,7 +34,7 @@ using Windows.Web.Http;
 // 资源视图的更新，快点刷新
 // gif截取器，压缩器
 // 自建服务器站点以增快上传速度
-// 图片和列表与引用交互存在问题，未考虑<p>里面的情况
+// 引用嵌套还存在一些问题
 // 今日头条的新交互，顺便也在小黑盒上试验下
 // 解决点击md文件刷新后再次点击会将TheOpenedFile.LinkedMdFile替换成TheOpenedFile.LinkedHtmlFile的BUG
 
@@ -1727,22 +1727,54 @@ namespace FullPlatformPublisher
             do
             {
                 HtmlNode blockQuoteImageNode = doc.DocumentNode
-                    .SelectSingleNode("//blockquote/img");
+                    .SelectSingleNode("//blockquote/img | //blockquote/p/img");
                 if (blockQuoteImageNode != null)
                 {
+                    HtmlNode ancestorNode;
+                    HtmlNode parentNode;
+                    string prefix;
+                    string suffix;
+
+                    if (blockQuoteImageNode.ParentNode.Name.Equals("blockquote"))
+                    {
+                        ancestorNode = blockQuoteImageNode.ParentNode.ParentNode;
+                        parentNode = blockQuoteImageNode.ParentNode;
+                        prefix = "<blockquote>";
+                        suffix = "</blockquote>";
+                    }
+                    else
+                    {
+                        ancestorNode = blockQuoteImageNode.ParentNode.ParentNode.ParentNode;
+                        parentNode = blockQuoteImageNode.ParentNode.ParentNode;
+                        prefix = "<blockquote class=\"pgc-blockquote-quote\"><p>";
+                        suffix = "</p></blockquote>";
+                    }
+
                     blockQuoteImageNode.Attributes.Add("POSITION", "");
-                    HtmlNode ancestorNode = blockQuoteImageNode.ParentNode.ParentNode;
-                    HtmlNode parentNode = blockQuoteImageNode.ParentNode;
-                    string[] temp = parentNode.InnerHtml.Split(blockQuoteImageNode.OuterHtml);
+                    string blockQuoteBeforeNodeString = parentNode.OuterHtml.Split(blockQuoteImageNode.OuterHtml)[0];
+                    string blockQuoteAfterNodeString = parentNode.OuterHtml.Split(blockQuoteImageNode.OuterHtml)[1];
                     blockQuoteImageNode.Attributes.Remove("POSITION");
-                    ancestorNode.InsertBefore(HtmlNode
-                        .CreateNode("<blockquote class=\"pgc-blockquote-quote\">"
-                        + temp[0] + "</blockquote>"), parentNode);
-                    ancestorNode.InsertBefore(HtmlNode
-                        .CreateNode(blockQuoteImageNode.OuterHtml), parentNode);
-                    ancestorNode.InsertBefore(HtmlNode
-                        .CreateNode("<blockquote class=\"pgc-blockquote-quote\">"
-                        + temp[1] + "</blockquote>"), parentNode);
+
+                    if (blockQuoteBeforeNodeString.EndsWith("<p>"))
+                    {
+                        blockQuoteBeforeNodeString = blockQuoteBeforeNodeString.Substring(0, blockQuoteBeforeNodeString.Length - 3);
+                        suffix = suffix.Replace("</p>", "");
+                    }
+                    if (blockQuoteAfterNodeString.StartsWith("</p>"))
+                    {
+                        blockQuoteAfterNodeString = blockQuoteAfterNodeString.Substring(4);
+                        prefix = prefix.Replace("<p>", "");
+                    }
+
+                    if (!(blockQuoteBeforeNodeString + suffix).Equals(""))
+                    {
+                        ancestorNode.InsertBefore(HtmlNode.CreateNode(blockQuoteBeforeNodeString + suffix), parentNode);
+                    }
+                    ancestorNode.InsertBefore(blockQuoteImageNode.Clone(), parentNode);
+                    if (!(prefix + blockQuoteAfterNodeString).Equals(""))
+                    {
+                        ancestorNode.InsertBefore(HtmlNode.CreateNode(prefix + blockQuoteAfterNodeString), parentNode);
+                    }
                     parentNode.Remove();
                 }
                 else

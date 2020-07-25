@@ -30,13 +30,13 @@
     <AppXManifest Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\Core\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2020-07-22T17:58:47.081</Modified>
+      <Modified>2020-07-25T12:58:50.674</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\FullPlatformPublisher.exe">
       <PackagePath>entrypoint\FullPlatformPublisher.exe</PackagePath>
-      <Modified>2020-07-22T17:58:46.038</Modified>
+      <Modified>2020-07-25T12:58:48.235</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\htmlagilitypack\1.11.24\lib\uap10.0\HtmlAgilityPack.dll">
       <PackagePath>HtmlAgilityPack.dll</PackagePath>
@@ -194,7 +194,7 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\Core\FullPlatformPublisher.exe">
       <PackagePath>FullPlatformPublisher.exe</PackagePath>
-      <Modified>2020-07-22T17:58:47.077</Modified>
+      <Modified>2020-07-25T12:58:50.514</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>
