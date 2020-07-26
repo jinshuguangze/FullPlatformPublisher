@@ -1682,17 +1682,71 @@ namespace FullPlatformPublisher
             }
 
             // 引用嵌套处理1：多重引用嵌套，用引号代替
-            bool singleQuote = false;
             do
             {
                 HtmlNode blockQuoteRepeatNode = doc.DocumentNode
-                .SelectSingleNode("//blockquote/blockquote");
+                    .SelectSingleNode("//blockquote/blockquote");
                 if (blockQuoteRepeatNode != null)
                 {
+                    bool hasDeeper;
+                    bool singleQuote = false;
+                    bool isContinue = false;
+                    do
+                    {
+                        hasDeeper = false;
+                        var blockQuoteRepeatNodeChildren = blockQuoteRepeatNode.ChildNodes;
+                        if (blockQuoteRepeatNodeChildren != null)
+                        {
+                            HtmlNode blockQuoteRepeatNodeClone = blockQuoteRepeatNode.Clone();
+                            var blockQuoteRepeatNodeChildrenClone = blockQuoteRepeatNodeClone.ChildNodes;
+                            if (blockQuoteRepeatNodeClone.InnerHtml.Equals(""))
+                            {
+                                blockQuoteRepeatNode.ParentNode.RemoveChild(blockQuoteRepeatNode, true);
+                                isContinue = true;
+                                break;
+                            }
+                            for (int i = 0; i < blockQuoteRepeatNodeChildren.Count; i++)
+                            {
+                                if (blockQuoteRepeatNodeChildren[i].Name.Equals("blockquote"))
+                                {
+                                    hasDeeper = true;
+                                    blockQuoteRepeatNode = blockQuoteRepeatNodeChildren[i];
+                                    singleQuote = !singleQuote;
+                                    break;
+                                }
+
+                                if (blockQuoteRepeatNodeChildren[i].Name.Equals("img")
+                                    || blockQuoteRepeatNodeChildren[i].Name.Equals("ol")
+                                    || blockQuoteRepeatNodeChildren[i].Name.Equals("ul"))
+                                {
+                                    blockQuoteRepeatNodeClone.RemoveChild(blockQuoteRepeatNodeChildrenClone[i]);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (blockQuoteRepeatNode.InnerHtml.Equals(""))
+                            {
+                                blockQuoteRepeatNode.Remove();
+                                isContinue = true;
+                                break;
+                            }
+                            else
+                            {
+                                blockQuoteRepeatNode.InnerHtml = "<p>" + blockQuoteRepeatNode.InnerHtml + "</p>";
+                            }
+                        }
+                    } while (hasDeeper);
+
+                    if (isContinue)
+                    {
+                        continue;
+                    }
+
                     string quoteSymbolBefore = singleQuote ? "「" : "『";
                     string quoteSymbolAfter = singleQuote ? "」" : "』";
-                    singleQuote = !singleQuote;
 
+                    // 这里需要改进
                     blockQuoteRepeatNode.InnerHtml = blockQuoteRepeatNode.InnerHtml
                         .Insert(blockQuoteRepeatNode.InnerHtml.IndexOf("<p>") + 3, "<strong>" + quoteSymbolBefore + "</strong>");
                     blockQuoteRepeatNode.InnerHtml = blockQuoteRepeatNode.InnerHtml
@@ -1739,7 +1793,7 @@ namespace FullPlatformPublisher
                     {
                         ancestorNode = blockQuoteImageNode.ParentNode.ParentNode;
                         parentNode = blockQuoteImageNode.ParentNode;
-                        prefix = "<blockquote>";
+                        prefix = "<blockquote class=\"pgc-blockquote-quote\">";
                         suffix = "</blockquote>";
                     }
                     else

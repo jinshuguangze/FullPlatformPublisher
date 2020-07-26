@@ -30,13 +30,13 @@
     <AppXManifest Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\Core\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2020-07-25T12:58:50.674</Modified>
+      <Modified>2020-07-26T18:27:41.483</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\FullPlatformPublisher.exe">
       <PackagePath>entrypoint\FullPlatformPublisher.exe</PackagePath>
-      <Modified>2020-07-25T12:58:48.235</Modified>
+      <Modified>2020-07-26T18:27:40.165</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\jinshuguangze\.nuget\packages\htmlagilitypack\1.11.24\lib\uap10.0\HtmlAgilityPack.dll">
       <PackagePath>HtmlAgilityPack.dll</PackagePath>
@@ -170,11 +170,11 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\App.xbf">
       <PackagePath>App.xbf</PackagePath>
-      <Modified>2020-07-22T17:02:43.198</Modified>
+      <Modified>2020-07-26T15:34:11.153</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\MainPage.xbf">
       <PackagePath>MainPage.xbf</PackagePath>
-      <Modified>2020-07-22T17:02:43.198</Modified>
+      <Modified>2020-07-26T15:34:11.153</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Program Files %28x86%29\Microsoft SDKs\Windows Kits\10\ExtensionSDKs\Microsoft.UniversalCRT.Debug\10.0.19041.0\\redist\Debug\X64\ucrtbased.dll">
       <PackagePath>ucrtbased.dll</PackagePath>
@@ -194,7 +194,7 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="S:\Code\VisualStudioWorkSpace\FullPlatformPublisher\FullPlatformPublisher\bin\x64\Debug\Core\FullPlatformPublisher.exe">
       <PackagePath>FullPlatformPublisher.exe</PackagePath>
-      <Modified>2020-07-25T12:58:50.514</Modified>
+      <Modified>2020-07-26T18:27:41.471</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>
