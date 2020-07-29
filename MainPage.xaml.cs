@@ -1865,7 +1865,7 @@ namespace FullPlatformPublisher
             }
             while (true);
 
-            // 引用多余处理：清理所有多余引用
+            // 引用多余处理：清理所有多余引用，在两段p中插入空行，将p居中处理
             var blockQuoteDestroyNodes = doc.DocumentNode
                 .SelectNodes("//blockquote");
             if (blockQuoteDestroyNodes != null)
@@ -2268,7 +2268,23 @@ namespace FullPlatformPublisher
 
             // 列表嵌套处理：暂不做处理
 
-            // 引用处理：暂不做处理
+            // 引用处理：将引用中的p变为居中
+            var blockQuoteNodes = doc.DocumentNode
+                .SelectNodes("//blockquote");
+            if (blockQuoteNodes != null)
+            {
+                foreach (HtmlNode node in blockQuoteNodes)
+                {
+                    var blockQuotePNodes = node.SelectNodes(".//p");
+                    if (blockQuotePNodes != null)
+                    {
+                        foreach (HtmlNode pNode in blockQuotePNodes)
+                        {
+                            pNode.SetAttributeValue("style", "text-align: center");
+                        }
+                    }
+                }
+            }
 
             // 引用嵌套处理：暂不做处理
 
@@ -2403,7 +2419,13 @@ namespace FullPlatformPublisher
                 }
             }
 
-            // steam页面爬取
+            // 添加游戏：暂不做处理
+
+            // 添加百科：暂不做处理
+
+            // 添加词条：暂不做处理
+
+            // 添加语音房间：暂不做处理
 
             StringWriter writer = new StringWriter();
             doc.Save(writer);
