@@ -26,17 +26,17 @@ using Windows.UI.Xaml.Media.Imaging;
 using Windows.Web.Http;
 
 // TODO：
-// 为全平台做steam的header图的爬取
-// 有可能的截图bmp文件出错无法读取
-// 有可能的视频爬取
-// 新建文件功能
-// 上传图片的进度条
-// 资源视图的更新，快点刷新
-// gif截取器，压缩器
-// 自建服务器站点以增快上传速度
-// 引用嵌套还存在一些问题
-// 今日头条的新交互，顺便也在小黑盒上试验下
-// 解决点击md文件刷新后再次点击会将TheOpenedFile.LinkedMdFile替换成TheOpenedFile.LinkedHtmlFile的BUG
+// 为全平台做steam的header图的爬取（优先级：中）
+// 有可能的视频爬取（优先级：低）
+// 有可能的截图bmp文件出错无法读取（优先级：高）
+// 新建文件功能（优先级：中）
+// 上传图片的进度条（优先级：中）
+// 资源视图的更新，快点刷新（优先级：低）
+// gif截取器，压缩器（优先级：极低）
+// 自建服务器站点以增快上传速度（优先级：极低）
+// 今日头条的新交互，顺便也在小黑盒上试验下（优先级：高）
+// 漏掉子节点#text的情况，全部的代码进行检查和优化（优先级：低）
+// 解决点击md文件刷新后再次点击会将TheOpenedFile.LinkedMdFile替换成TheOpenedFile.LinkedHtmlFile的BUG（优先级：极低）
 
 namespace FullPlatformPublisher
 {
@@ -1699,12 +1699,6 @@ namespace FullPlatformPublisher
                         {
                             HtmlNode blockQuoteRepeatNodeClone = blockQuoteRepeatNode.Clone();
                             var blockQuoteRepeatNodeChildrenClone = blockQuoteRepeatNodeClone.ChildNodes;
-                            if (blockQuoteRepeatNodeClone.InnerHtml.Equals(""))
-                            {
-                                blockQuoteRepeatNode.ParentNode.RemoveChild(blockQuoteRepeatNode, true);
-                                isContinue = true;
-                                break;
-                            }
                             for (int i = 0; i < blockQuoteRepeatNodeChildren.Count; i++)
                             {
                                 if (blockQuoteRepeatNodeChildren[i].Name.Equals("blockquote"))
@@ -1721,6 +1715,13 @@ namespace FullPlatformPublisher
                                 {
                                     blockQuoteRepeatNodeClone.RemoveChild(blockQuoteRepeatNodeChildrenClone[i]);
                                 }
+                            }
+
+                            if (blockQuoteRepeatNodeClone.InnerHtml.Replace("\n", "").Equals(""))
+                            {
+                                blockQuoteRepeatNode.ParentNode.RemoveChild(blockQuoteRepeatNode, true);
+                                isContinue = true;
+                                break;
                             }
                         }
                         else
@@ -1746,15 +1747,10 @@ namespace FullPlatformPublisher
                     string quoteSymbolBefore = singleQuote ? "「" : "『";
                     string quoteSymbolAfter = singleQuote ? "」" : "』";
 
-                    // 这里需要改进
                     blockQuoteRepeatNode.InnerHtml = blockQuoteRepeatNode.InnerHtml
                         .Insert(blockQuoteRepeatNode.InnerHtml.IndexOf("<p>") + 3, "<strong>" + quoteSymbolBefore + "</strong>");
                     blockQuoteRepeatNode.InnerHtml = blockQuoteRepeatNode.InnerHtml
                         .Insert(blockQuoteRepeatNode.InnerHtml.LastIndexOf("</p>"), "<strong>" + quoteSymbolAfter + "</strong>");
-                    blockQuoteRepeatNode.InnerHtml = blockQuoteRepeatNode.InnerHtml
-                        .Insert(blockQuoteRepeatNode.InnerHtml.IndexOf("<p>"), "<p><br></p>");
-                    blockQuoteRepeatNode.InnerHtml = blockQuoteRepeatNode.InnerHtml
-                        .Insert(blockQuoteRepeatNode.InnerHtml.LastIndexOf("</p>") + 4, "<p><br></p>");
                     blockQuoteRepeatNode.ParentNode.RemoveChild(blockQuoteRepeatNode, true);
                 }
                 else
@@ -1763,6 +1759,8 @@ namespace FullPlatformPublisher
                 }
             }
             while (true);
+
+            System.Diagnostics.Debug.WriteLine(doc.DocumentNode.SelectSingleNode("//div").OuterHtml);
 
             // 引用处理：全部改成头条模式的引用，去除多余标签
             // TODO：三种模式安排上
