@@ -1300,7 +1300,7 @@ namespace FullPlatformPublisher
             }
 
             // 表情处理：暂不做处理
-            // TODO:做成颜文字
+            // TODO:做成和头条表情一致
 
             // 高亮文字处理：转化为编辑器支持的高亮
             var highLightNodes = doc.DocumentNode
@@ -1762,7 +1762,7 @@ namespace FullPlatformPublisher
 
             System.Diagnostics.Debug.WriteLine(doc.DocumentNode.SelectSingleNode("//div").OuterHtml);
 
-            // 引用处理：全部改成头条模式的引用，去除多余标签
+            // 引用处理：全部改成头条模式的引用，去除多余标签，将所有p标签位置改为居中表示
             // TODO：三种模式安排上
             var blockQuoteNodes = doc.DocumentNode
             .SelectNodes("//blockquote");
@@ -1907,6 +1907,15 @@ namespace FullPlatformPublisher
                             }
                             while (true);
                         }
+
+                        var blockQuotePNodes = node.SelectNodes(".//p");
+                        if (blockQuotePNodes != null)
+                        {
+                            foreach (HtmlNode pNode in blockQuotePNodes)
+                            {
+                                pNode.SetAttributeValue("style", "text-align: center");
+                            }
+                        }
                     }
                 }
             }
@@ -2042,11 +2051,6 @@ namespace FullPlatformPublisher
                 }
             }
 
-            StringWriter writer = new StringWriter();
-            doc.Save(writer);
-
-            return (writer.ToString());
-
             // 音频处理：暂不做处理
             // TODO：做有可能的支持
 
@@ -2070,6 +2074,11 @@ namespace FullPlatformPublisher
 
             // 在线网页处理：暂不做处理
             // TODO：在线给已外链添加<u></u>
+
+            StringWriter writer = new StringWriter();
+            doc.Save(writer);
+
+            return (writer.ToString());
         }
 
         // 小黑盒html处理
